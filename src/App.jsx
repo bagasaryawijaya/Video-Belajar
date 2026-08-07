@@ -11,66 +11,67 @@ import Coursespage from "./pages/Coursespage";
 import Aboutpage from "./pages/Aboutpage";
 import Programpage from "./pages/Programpage";
 
+import Footer from "./components/Footer";
+
 import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
   return (
-    <Routes>
+    <>
+      <Routes>
 
-      {/* ================= AUTH ================= */}
+        {/* ================= AUTH ================= */}
+        <Route element={<AuthLayout />}>
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<SignUp />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+        </Route>
 
-      <Route element={<AuthLayout />}>
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<SignUp />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-      </Route>
 
-      {/* ================= MAIN ================= */}
+        {/* ================= MAIN ================= */}
+        <Route element={<MainLayout />}>
+          <Route path="/" element={<Homepage />} />
 
-      <Route element={<MainLayout />}>
+          <Route
+            path="/courses"
+            element={
+              <ProtectedRoute>
+                <Coursespage />
+              </ProtectedRoute>
+            }
+          />
 
+          <Route
+            path="/about"
+            element={
+              <ProtectedRoute>
+                <Aboutpage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/program"
+            element={
+              <ProtectedRoute>
+                <Programpage />
+              </ProtectedRoute>
+            }
+          />
+        </Route>
+
+
+        {/* ================= DEFAULT ================= */}
         <Route
-          path="/"
-          element={<Homepage />}
+          path="*"
+          element={<Navigate to="/login" replace />}
         />
 
-        <Route
-          path="/courses"
-          element={
-            <ProtectedRoute>
-              <Coursespage />
-            </ProtectedRoute>
-          }
-        />
+      </Routes>
 
-        <Route
-          path="/about"
-          element={
-            <ProtectedRoute>
-              <Aboutpage />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/program"
-          element={
-            <ProtectedRoute>
-              <Programpage />
-            </ProtectedRoute>
-          }
-        />
-
-      </Route>
-
-      {/* ================= DEFAULT ================= */}
-
-      <Route
-        path="*"
-        element={<Navigate to="/login" replace />}
-      />
-
-    </Routes>
+      {/* Footer tampil di semua halaman */}
+      <Footer />
+    </>
   );
 }
 
