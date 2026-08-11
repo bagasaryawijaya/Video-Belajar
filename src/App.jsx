@@ -12,14 +12,12 @@ import Aboutpage from "./pages/Aboutpage";
 import Programpage from "./pages/Programpage";
 
 import Footer from "./components/Footer";
-
-import ProtectedRoute from "./components/ProtectedRoute";
+import Profile from "./pages/Profile";
 
 function App() {
   return (
     <>
       <Routes>
-
         {/* ================= AUTH ================= */}
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<Login />} />
@@ -27,49 +25,21 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
         </Route>
 
-
         {/* ================= MAIN ================= */}
         <Route element={<MainLayout />}>
           <Route path="/" element={<Homepage />} />
 
-          <Route
-            path="/courses"
-            element={
-              <ProtectedRoute>
-                <Coursespage />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/about"
-            element={
-              <ProtectedRoute>
-                <Aboutpage />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/program"
-            element={
-              <ProtectedRoute>
-                <Programpage />
-              </ProtectedRoute>
-            }
-          />
+          {/* Courses, About, dan Program dapat diakses tanpa login */}
+          <Route path="/courses" element={<Coursespage />} />
+      <Route path="/profile" element={<Profile />} />
+          <Route path="/about" element={<Aboutpage />} />
+          <Route path="/program" element={<Programpage />} />
         </Route>
 
-
         {/* ================= DEFAULT ================= */}
-        <Route
-          path="*"
-          element={<Navigate to="/login" replace />}
-        />
-
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
 
-      {/* Footer tampil di semua halaman */}
       <Footer />
     </>
   );

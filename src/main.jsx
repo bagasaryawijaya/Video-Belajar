@@ -6,12 +6,15 @@ import App from "./App";
 import "./index.css";
 
 import { AuthProvider } from "./context/AuthContext";
+import { CourseProvider } from "./context/CourseContext";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <BrowserRouter>
       <AuthProvider>
-        <App />
+        <CourseProvider>
+          <App />
+        </CourseProvider>
       </AuthProvider>
     </BrowserRouter>
   </React.StrictMode>

@@ -1,30 +1,30 @@
-import ChooseUs from '../components/ChooseUs'
-import Hero from '../components/Hero'
-import About from '../components/About'
-import OurClass from '../components/OurClass'
-import Testimony from '../components/Testimony'
+
+import ChooseUs from "../components/ChooseUs";
+import Hero from "../components/Hero";
+import About from "../components/About";
+import OurClass from "../components/OurClass";
+import Testimony from "../components/Testimony";
 
 const Homepage = () => {
   return (
-    
-    <div className="home pt-20 lg:pt-28">
+    <div className="home">
       {/* Hero */}
-      <Hero/>
+      <Hero />
 
       {/* Choose Us */}
-      <ChooseUs/>
+      <ChooseUs />
 
       {/* About Us */}
-      <About/>
+      <About />
 
       {/* Our Class */}
-      <OurClass/>
+      <OurClass />
 
       {/* Testimony */}
-      <Testimony/>
-      
+      <Testimony />
     </div>
-  )
-}
+  );
+};
 
-export default Homepage
+export default Homepage;
+

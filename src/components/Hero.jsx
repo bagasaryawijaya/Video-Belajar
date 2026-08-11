@@ -1,4 +1,12 @@
 import man from '../assets/Sample Man.png'
+import man2 from '../assets/hafid-ardiansyah.jpg'
+import women from '../assets/leandra-ayudhia.jpg'
+
+import student1 from '../assets/student1.png'
+import student2 from '../assets/student2.png'
+import student3 from '../assets/student3.png'
+import student4 from '../assets/student4.png'
+
 import logo1 from '../assets/Google Logotype.png'
 import logo2 from '../assets/Canva Logotype.png'
 import logo3 from '../assets/Amazon.png'
@@ -7,16 +15,15 @@ import logo4 from '../assets/Sketch Logotype.png'
 const Hero = () => {
   return (
     // Hero
-    <div className="container max-w-7xl mx-auto px-5 lg:px-8 py-10 lg:py-20">
+    <div className="container max-w-6xl mx-auto px-4 lg:px-6 py-16 lg:py-20">
       <div className="grid lg:grid-cols-2 gap-14 items-center">
 
         {/* ================= LEFT ================= */}
-        <div className="order-1">
+        <div className="">
 
           {/* Heading */}
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight text-slate-800">
-            Kuasai Keterampilan <br />
-            Digital dengan Mudah!
+          <h1 className="text-4xl md:text-6xl lg:text-6xl font-bold leading-tight text-slate-800">
+            Kuasai Keterampilan Digital dengan Mudah!
           </h1>
 
           {/* Description */}
@@ -39,13 +46,13 @@ const Hero = () => {
 
                 <div className="flex items-center gap-3">
                   <img
-                    src={man}
+                    src={women}
                     alt=""
                     className="w-12 h-12 rounded-full object-cover"
                   />
 
                   <div>
-                    <h4 className="font-semibold">Aji Saputra</h4>
+                    <h4 className="font-semibold">Leandra Ayudhia</h4>
                     <p className="text-sm text-gray-500">
                       UI/UX Design
                     </p>
@@ -54,13 +61,13 @@ const Hero = () => {
 
                 <div className="flex items-center gap-3">
                   <img
-                    src={man}
+                    src={man2}
                     alt=""
                     className="w-12 h-12 rounded-full object-cover"
                   />
 
                   <div>
-                    <h4 className="font-semibold">Imanuel</h4>
+                    <h4 className="font-semibold">Hafid Ardiansyah</h4>
                     <p className="text-sm text-gray-500">
                       Web Development
                     </p>
@@ -97,25 +104,25 @@ const Hero = () => {
               <div className="flex items-center">
 
                 <img
-                  src={man}
+                  src={student1}
                   className="w-12 h-12 rounded-full border-2 border-white"
                   alt=""
                 />
 
                 <img
-                  src={man}
+                  src={student2}
                   className="w-12 h-12 rounded-full border-2 border-white -ml-3"
                   alt=""
                 />
 
                 <img
-                  src={man}
+                  src={student3}
                   className="w-12 h-12 rounded-full border-2 border-white -ml-3"
                   alt=""
                 />
 
                 <img
-                  src={man}
+                  src={student4}
                   className="w-12 h-12 rounded-full border-2 border-white -ml-3"
                   alt=""
                 />
@@ -178,7 +185,7 @@ const Hero = () => {
               <div className="flex items-center gap-4">
 
                 <img
-                  src={man}
+                  src={women}
                   className="w-12 h-12 rounded-full object-cover"
                   alt=""
                 />
@@ -186,7 +193,7 @@ const Hero = () => {
                 <div>
 
                   <h4 className="font-semibold">
-                    Aji Saputra
+                    Leandra Ayudhia
                   </h4>
 
                   <p className="text-sm text-gray-500">
@@ -200,7 +207,7 @@ const Hero = () => {
               <div className="flex items-center gap-4">
 
                 <img
-                  src={man}
+                  src={man2}
                   className="w-12 h-12 rounded-full object-cover"
                   alt=""
                 />
@@ -208,7 +215,7 @@ const Hero = () => {
                 <div>
 
                   <h4 className="font-semibold">
-                    Imanuel
+                    Hafid Ardiansyah
                   </h4>
 
                   <p className="text-sm text-gray-500">
