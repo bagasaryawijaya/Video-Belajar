@@ -23,6 +23,8 @@ export default function AdminCourseManager() {
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState(null);
   const [open, setOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
 
   if (!isAdmin) return null;
 
@@ -75,15 +77,18 @@ export default function AdminCourseManager() {
   const handleThumbnailChange = (e) => {
     const file = e.target.files?.[0];
 
+    // Reset input agar file yang sama bisa dipilih lagi.
+    e.target.value = "";
+
     if (!file) return;
 
-    // Validasi tipe file
     if (!file.type.startsWith("image/")) {
       alert("File yang dipilih harus berupa gambar.");
       return;
     }
 
-    // Validasi ukuran maksimal 5 MB
+    // File asli boleh sampai 5 MB, tetapi akan dikompres sebelum
+    // dikirim ke MockAPI supaya payload POST/PATCH tidak terlalu besar.
     if (file.size > 5 * 1024 * 1024) {
       alert("Ukuran gambar maksimal 5 MB.");
       return;
@@ -91,11 +96,53 @@ export default function AdminCourseManager() {
 
     const reader = new FileReader();
 
-    reader.onloadend = () => {
-      setForm((prev) => ({
-        ...prev,
-        thumbnail: reader.result,
-      }));
+    reader.onerror = () => {
+      alert("Gagal membaca file gambar.");
+    };
+
+    reader.onload = () => {
+      const image = new Image();
+
+      image.onerror = () => {
+        alert("Gagal memproses gambar.");
+      };
+
+      image.onload = () => {
+        const maxWidth = 1280;
+        const maxHeight = 720;
+
+        const scale = Math.min(
+          1,
+          maxWidth / image.width,
+          maxHeight / image.height
+        );
+
+        const width = Math.max(1, Math.round(image.width * scale));
+        const height = Math.max(1, Math.round(image.height * scale));
+
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+
+        const context = canvas.getContext("2d");
+
+        if (!context) {
+          alert("Browser tidak dapat memproses gambar.");
+          return;
+        }
+
+        context.drawImage(image, 0, 0, width, height);
+
+        // WEBP biasanya jauh lebih kecil daripada PNG/JPG.
+        const compressedImage = canvas.toDataURL("image/webp", 0.78);
+
+        setForm((prev) => ({
+          ...prev,
+          thumbnail: compressedImage,
+        }));
+      };
+
+      image.src = reader.result;
     };
 
     reader.readAsDataURL(file);
@@ -124,6 +171,8 @@ export default function AdminCourseManager() {
       price: Number(form.price) || 0,
     };
 
+    setSaving(true);
+
     try {
       if (editingId) {
         await updateCourse(editingId, courseData);
@@ -135,7 +184,10 @@ export default function AdminCourseManager() {
 
       closeForm();
     } catch (error) {
+      console.error(error);
       alert(error.message || "Terjadi kesalahan saat menyimpan course.");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -149,11 +201,16 @@ export default function AdminCourseManager() {
 
     if (!confirmed) return;
 
+    setDeletingId(id);
+
     try {
       await deleteCourse(id);
       alert("Course berhasil dihapus.");
     } catch (error) {
+      console.error(error);
       alert(error.message || "Gagal menghapus course.");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -231,6 +288,7 @@ export default function AdminCourseManager() {
                   <button
                     type="button"
                     onClick={() => openEdit(course)}
+                    disabled={saving || deletingId !== null}
                     className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition"
                   >
                     <FaEdit />
@@ -240,10 +298,11 @@ export default function AdminCourseManager() {
                   <button
                     type="button"
                     onClick={() => handleDelete(course.id)}
+                    disabled={saving || deletingId !== null}
                     className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition"
                   >
                     <FaTrash />
-                    Hapus
+                    {deletingId === course.id ? "Menghapus..." : "Hapus"}
                   </button>
                 </div>
               </div>
@@ -583,11 +642,14 @@ export default function AdminCourseManager() {
 
                 <button
                   type="submit"
-                  className="px-5 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+                  disabled={saving}
+                  className="px-5 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  {editingId
-                    ? "Simpan Perubahan"
-                    : "Tambah Course"}
+                  {saving
+                    ? "Menyimpan..."
+                    : editingId
+                      ? "Simpan Perubahan"
+                      : "Tambah Course"}
                 </button>
 
               </div>
