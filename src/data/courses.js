@@ -9,7 +9,7 @@ const defaultCourses = [
     rating: 4.8,
     reviews: 120,
     price: 149000,
-    category: "Programming",
+    category: "Web Development",
     level: "Beginner",
   },
   {
@@ -22,7 +22,7 @@ const defaultCourses = [
     rating: 4.7,
     reviews: 98,
     price: 129000,
-    category: "Programming",
+    category: "Web Development",
     level: "Beginner",
   },
   {

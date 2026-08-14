@@ -71,31 +71,95 @@ export default function AdminCourseManager() {
 
   // ==============================
   // HANDLE UPLOAD THUMBNAIL
+  // MockAPI menyimpan thumbnail-course sebagai STRING.
+  // File dikompres + diubah menjadi Data URL agar bisa dikirim
+  // melalui JSON dan disimpan langsung pada field thumbnail-course.
   // ==============================
   const handleThumbnailChange = (e) => {
     const file = e.target.files?.[0];
 
     if (!file) return;
 
-    // Validasi tipe file
     if (!file.type.startsWith("image/")) {
       alert("File yang dipilih harus berupa gambar.");
+      e.target.value = "";
       return;
     }
 
-    // Validasi ukuran maksimal 5 MB
+    // Batas file asli agar proses browser tetap ringan.
     if (file.size > 5 * 1024 * 1024) {
-      alert("Ukuran gambar maksimal 5 MB.");
+      alert("Ukuran gambar asli maksimal 5 MB.");
+      e.target.value = "";
       return;
     }
 
     const reader = new FileReader();
 
-    reader.onloadend = () => {
-      setForm((prev) => ({
-        ...prev,
-        thumbnail: reader.result,
-      }));
+    reader.onload = () => {
+      const image = new Image();
+
+      image.onload = () => {
+        const MAX_WIDTH = 1280;
+        const MAX_HEIGHT = 720;
+
+        let width = image.naturalWidth;
+        let height = image.naturalHeight;
+
+        const scale = Math.min(
+          1,
+          MAX_WIDTH / width,
+          MAX_HEIGHT / height
+        );
+
+        width = Math.round(width * scale);
+        height = Math.round(height * scale);
+
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext("2d");
+
+        if (!ctx) {
+          alert("Browser tidak mendukung proses gambar.");
+          return;
+        }
+
+        ctx.drawImage(image, 0, 0, width, height);
+
+        // WebP jauh lebih kecil daripada PNG/JPEG sehingga lebih aman
+        // untuk disimpan sebagai string di MockAPI.
+        const compressedDataUrl = canvas.toDataURL("image/webp", 0.78);
+
+        // Hindari request JSON yang terlalu besar.
+        const MAX_DATA_URL_LENGTH = 2_000_000;
+
+        if (compressedDataUrl.length > MAX_DATA_URL_LENGTH) {
+          alert(
+            "Gambar masih terlalu besar setelah dikompres. " +
+            "Gunakan gambar dengan resolusi/ukuran lebih kecil."
+          );
+          e.target.value = "";
+          return;
+        }
+
+        setForm((prev) => ({
+          ...prev,
+          thumbnail: compressedDataUrl,
+        }));
+      };
+
+      image.onerror = () => {
+        alert("Gambar tidak dapat diproses.");
+        e.target.value = "";
+      };
+
+      image.src = reader.result;
+    };
+
+    reader.onerror = () => {
+      alert("Gagal membaca file gambar.");
+      e.target.value = "";
     };
 
     reader.readAsDataURL(file);
@@ -117,8 +181,24 @@ export default function AdminCourseManager() {
       return;
     }
 
+    const allowedCategories = [
+      "UI/UX Design",
+      "Web Development",
+      "Data Analyst",
+    ];
+
+    const normalizedCategory = allowedCategories.includes(form.category)
+      ? form.category
+      : "";
+
+    if (!normalizedCategory) {
+      alert("Silakan pilih kategori course.");
+      return;
+    }
+
     const courseData = {
       ...form,
+      category: normalizedCategory,
       rating: Number(form.rating) || 0,
       reviews: Number(form.reviews) || 0,
       price: Number(form.price) || 0,
@@ -256,7 +336,7 @@ export default function AdminCourseManager() {
           MODAL
       ============================== */}
       {open && (
-        <div className="fixed inset-0 z-[200] bg-black/50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-200 bg-black/50 flex items-center justify-center p-4">
 
           <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
 
@@ -406,42 +486,6 @@ export default function AdminCourseManager() {
               </div>
 
               {/* ==============================
-                  INSTRUKTUR
-              ============================== */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Instruktur
-                </label>
-
-                <input
-                  name="instructor"
-                  type="text"
-                  value={form.instructor}
-                  onChange={handleChange}
-                  placeholder="Nama instruktur"
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-green-500"
-                />
-              </div>
-
-              {/* ==============================
-                  JABATAN INSTRUKTUR
-              ============================== */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Jabatan Instruktur
-                </label>
-
-                <input
-                  name="instructorRole"
-                  type="text"
-                  value={form.instructorRole}
-                  onChange={handleChange}
-                  placeholder="Contoh: UI/UX Designer"
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-green-500"
-                />
-              </div>
-
-              {/* ==============================
                   KATEGORI
               ============================== */}
               <div>
@@ -469,72 +513,6 @@ export default function AdminCourseManager() {
                     Data Analyst
                   </option>
                 </select>
-              </div>
-
-              {/* ==============================
-                  LEVEL
-              ============================== */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Level
-                </label>
-
-                <select
-                  name="level"
-                  value={form.level}
-                  onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
-                >
-                  <option value="Beginner">
-                    Beginner
-                  </option>
-
-                  <option value="Intermediate">
-                    Intermediate
-                  </option>
-
-                  <option value="Advanced">
-                    Advanced
-                  </option>
-                </select>
-              </div>
-
-              {/* ==============================
-                  RATING
-              ============================== */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Rating
-                </label>
-
-                <input
-                  name="rating"
-                  type="number"
-                  min="0"
-                  max="5"
-                  step="0.1"
-                  value={form.rating}
-                  onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-green-500"
-                />
-              </div>
-
-              {/* ==============================
-                  JUMLAH REVIEW
-              ============================== */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Jumlah Review
-                </label>
-
-                <input
-                  name="reviews"
-                  type="number"
-                  min="0"
-                  value={form.reviews}
-                  onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-green-500"
-                />
               </div>
 
               {/* ==============================

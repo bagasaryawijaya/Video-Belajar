@@ -26,21 +26,6 @@ const OurClass = () => {
     return `Rp${Number(price || 0).toLocaleString("id-ID")}`;
   };
 
-  const renderStars = (rating) => {
-    const filled = Math.round(Number(rating) || 0);
-
-    return [...Array(5)].map((_, i) => (
-      <span
-        key={i}
-        className={`text-xs ${
-          i < filled ? "text-yellow-400" : "text-gray-300"
-        }`}
-      >
-        ★
-      </span>
-    ));
-  };
-
   return (
     <div>
       <section className="py-16 sm:py-20 bg-white" id="courses">
@@ -85,7 +70,7 @@ const OurClass = () => {
                     key={item}
                     onClick={() => setCategory(item)}
                     className={`
-                      flex-shrink-0
+                      shrink-0
                       whitespace-nowrap
                       rounded-full
                       font-medium
@@ -144,7 +129,7 @@ const OurClass = () => {
                     COURSE IMAGE
                 ========================== */}
                 <img
-                  src={course.image || course.thumbnail}
+                  src={course.thumbnail}
                   alt={course.title}
                   className="
                     w-full
@@ -188,51 +173,7 @@ const OurClass = () => {
                   </p>
 
                   {/* =========================
-                      INSTRUCTOR
-                  ========================== */}
-                  <div className="flex items-center gap-3 mt-5">
-                    <img
-                      src={`https://i.pravatar.cc/100?img=${course.id}`}
-                      alt={course.instructor}
-                      className="
-                        w-10
-                        h-10
-                        sm:w-12
-                        sm:h-12
-                        rounded-full
-                        object-cover
-                        flex-shrink-0
-                      "
-                    />
-
-                    <div className="min-w-0">
-                      <p
-                        className="
-                          text-sm
-                          sm:text-base
-                          font-semibold
-                          text-slate-800
-                          truncate
-                        "
-                      >
-                        {course.instructor}
-                      </p>
-
-                      <p
-                        className="
-                          text-xs
-                          sm:text-sm
-                          text-gray-500
-                          truncate
-                        "
-                      >
-                        {course.role}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* =========================
-                      RATING & PRICE
+                      PRICE
                   ========================== */}
                   <div
                     className="
@@ -243,16 +184,6 @@ const OurClass = () => {
                       gap-3
                     "
                   >
-                    {/* Rating */}
-                    <div>
-                      <div className="flex">
-                        {renderStars(course.rating)}
-                      </div>
-
-                      <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
-                        {course.rating} ({course.reviews})
-                      </p>
-                    </div>
 
                     {/* Price */}
                     <p

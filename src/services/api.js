@@ -33,9 +33,7 @@ const mapCourseFromApi = (course) => ({
     course.role ??
     "",
   category:
-    course.kategori ??
-    course.category ??
-    "",
+    normalizeCategory(course.kategori ?? course.category ?? ""),
   level: course.level ?? "Beginner",
   rating: Number(course.rating) || 0,
   reviews:
@@ -45,13 +43,27 @@ const mapCourseFromApi = (course) => ({
 });
 
 // Mengubah format aplikasi menjadi format field MockAPI
+const ALLOWED_CATEGORIES = [
+  "UI/UX Design",
+  "Web Development",
+  "Data Analyst",
+];
+
+const normalizeCategory = (category) =>
+  ALLOWED_CATEGORIES.includes(category) ? category : "";
+
 const mapCourseToApi = (course) => ({
-  title: course.title,
+  title: course.title || "",
   deskripsi: course.description || "",
-  "thumbnail-course": course.thumbnail || "",
+  // Schema MockAPI: thumbnail-course = String.
+  // Nilainya dapat berupa URL gambar atau Data URL hasil upload komputer.
+  "thumbnail-course": typeof course.thumbnail === "string"
+    ? course.thumbnail
+    : "",
+
   instruktur: course.instructor || "",
   "jabatan-instruktur": course.instructorRole || "",
-  kategori: course.category || "",
+  kategori: normalizeCategory(course.category),
   level: course.level || "Beginner",
   rating: Number(course.rating) || 0,
   "jumlah-review": Number(course.reviews) || 0,

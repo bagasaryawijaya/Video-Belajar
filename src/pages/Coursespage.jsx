@@ -27,24 +27,6 @@ export default function Coursespage() {
     return `Rp${number.toLocaleString("id-ID")}`;
   };
 
-  // Menampilkan bintang rating
-  const renderStars = (rating) => {
-    const filled = Math.round(Number(rating) || 0);
-
-    return [...Array(5)].map((_, index) => (
-      <span
-        key={index}
-        className={
-          index < filled
-            ? "text-yellow-400 text-xs"
-            : "text-gray-300 text-xs"
-        }
-      >
-        ★
-      </span>
-    ));
-  };
-
   return (
     <div className="pt-28 pb-20">
       <div className="max-w-7xl mx-auto px-5">
@@ -65,7 +47,7 @@ export default function Coursespage() {
           <div className="flex justify-center gap-2 bg-gray-100 rounded-full p-2 w-max mx-auto">
 
             {categories.map((item) => (
-              <button
+              <button type="button"
                 key={item}
                 onClick={() => setCategory(item)}
                 className={`
@@ -114,7 +96,7 @@ export default function Coursespage() {
             >
               {/* Course Image */}
               <img
-                src={course.thumbnail || course.image}
+                src={course.thumbnail}
                 alt={course.title}
                 className="w-full h-56 object-cover"
               />
@@ -136,39 +118,9 @@ export default function Coursespage() {
                   {course.description}
                 </p>
 
-                {/* Instructor */}
-                <div className="flex items-center gap-3 mt-5">
-                  <img
-                    src={`https://i.pravatar.cc/100?img=${course.id}`}
-                    alt={course.instructor}
-                    className="w-12 h-12 rounded-full"
-                  />
 
-                  <div>
-                    <p className="font-semibold">
-                      {course.instructor}
-                    </p>
-
-                    <p className="text-sm text-gray-500">
-                      {course.instructorRole || course.role}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Rating & Price */}
+                {/* Price */}
                 <div className="flex justify-between items-center mt-6">
-
-                  <div>
-                    {/* Stars */}
-                    <div className="flex">
-                      {renderStars(course.rating)}
-                    </div>
-
-                    {/* Rating */}
-                    <p className="text-sm text-gray-500">
-                      {course.rating} ({course.reviews})
-                    </p>
-                  </div>
 
                   {/* Price */}
                   <p className="text-xl font-bold text-green-500">

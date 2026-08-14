@@ -4,44 +4,96 @@ import MainLayout from "./layouts/MainLayout";
 import AuthLayout from "./layouts/AuthLayout";
 
 import Homepage from "./pages/Homepage";
-import Login from "./pages/Login";
-import SignUp from "./pages/SignUp";
-import ForgotPassword from "./pages/ForgotPassword";
 import Coursespage from "./pages/Coursespage";
 import Aboutpage from "./pages/Aboutpage";
 import Contactpage from "./pages/Contactpage";
 
-import Footer from "./components/Footer";
+import Login from "./pages/Login";
+import SignUp from "./pages/SignUp";
+import ForgotPassword from "./pages/ForgotPassword";
+
 import Profile from "./pages/Profile";
 
 function App() {
   return (
-    <>
-      <Routes>
-        {/* ================= AUTH ================= */}
-        <Route element={<AuthLayout />}>
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<SignUp />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-        </Route>
+    <Routes>
 
-        {/* ================= MAIN ================= */}
-        <Route element={<MainLayout />}>
-          <Route path="/" element={<Homepage />} />
+      {/* =====================================================
+          MAIN WEBSITE
+      ====================================================== */}
 
-          {/* Courses, About, dan Contact dapat diakses tanpa login */}
-          <Route path="/courses" element={<Coursespage />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/about" element={<Aboutpage />} />
-          <Route path="/contact" element={<Contactpage />} />
-        </Route>
+      <Route element={<MainLayout />}>
 
-        {/* ================= DEFAULT ================= */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+        {/* HOME */}
+        <Route
+          path="/"
+          element={<Homepage />}
+        />
 
-      <Footer />
-    </>
+        {/* COURSES */}
+        <Route
+          path="/courses"
+          element={<Coursespage />}
+        />
+
+        {/* ABOUT */}
+        <Route
+          path="/about"
+          element={<Aboutpage />}
+        />
+
+        {/* CONTACT */}
+        <Route
+          path="/contact"
+          element={<Contactpage />}
+        />
+
+        {/* PROFILE */}
+        <Route
+          path="/profile"
+          element={<Profile />}
+        />
+
+      </Route>
+
+      {/* =====================================================
+          AUTHENTICATION
+      ====================================================== */}
+
+      <Route element={<AuthLayout />}>
+
+        <Route
+          path="/login"
+          element={<Login />}
+        />
+
+        <Route
+          path="/signup"
+          element={<SignUp />}
+        />
+
+        <Route
+          path="/forgot-password"
+          element={<ForgotPassword />}
+        />
+
+      </Route>
+
+      {/* =====================================================
+          JIKA URL TIDAK DITEMUKAN
+      ====================================================== */}
+
+      <Route
+        path="*"
+        element={
+          <Navigate
+            to="/"
+            replace
+          />
+        }
+      />
+
+    </Routes>
   );
 }
 

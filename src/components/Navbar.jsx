@@ -10,24 +10,26 @@ const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 
-  // =========================
-  // SCROLL EFFECT
-  // =========================
+  // =====================================================
+  // SCROLL NAVBAR
+  // =====================================================
+
   useEffect(() => {
-    const onScroll = () => {
+    const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
     };
 
-    window.addEventListener("scroll", onScroll);
+    window.addEventListener("scroll", handleScroll);
 
     return () => {
-      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("scroll", handleScroll);
     };
   }, []);
 
-  // =========================
-  // LOCK BODY WHEN MOBILE MENU OPEN
-  // =========================
+  // =====================================================
+  // LOCK BODY SAAT MOBILE MENU TERBUKA
+  // =====================================================
+
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
@@ -43,25 +45,67 @@ const Navbar = () => {
     };
   }, [isOpen]);
 
-  // =========================
+  // =====================================================
+  // SCROLL KE PALING ATAS
+  // =====================================================
+
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: "smooth",
+    });
+  };
+
+  // =====================================================
+  // HANDLE NAVIGATION
+  // =====================================================
+
+  const handleNavigation = (path) => {
+    setIsOpen(false);
+
+    // Pindah halaman
+    navigate(path);
+
+    // Tetap kembali ke atas
+    setTimeout(() => {
+      window.scrollTo({
+        top: 0,
+        left: 0,
+        behavior: "instant",
+      });
+    }, 0);
+  };
+
+  // =====================================================
   // CLOSE MOBILE MENU
-  // =========================
+  // =====================================================
+
   const closeMenu = () => {
     setIsOpen(false);
   };
 
-  // =========================
+  // =====================================================
   // LOGOUT
-  // =========================
+  // =====================================================
+
   const handleLogout = () => {
     logout();
     closeMenu();
+
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: "instant",
+    });
+
     navigate("/login");
   };
 
-  // =========================
-  // NAV LINK STYLE
-  // =========================
+  // =====================================================
+  // NAV LINK DESKTOP
+  // =====================================================
+
   const navLinkClass = ({ isActive }) =>
     `
       relative
@@ -71,6 +115,7 @@ const Navbar = () => {
       font-medium
       transition-colors
       duration-200
+
       ${
         isActive
           ? "text-green-600"
@@ -84,6 +129,7 @@ const Navbar = () => {
       after:bg-green-500
       after:transition-all
       after:duration-200
+
       ${
         isActive
           ? "after:w-full"
@@ -91,13 +137,17 @@ const Navbar = () => {
       }
     `;
 
-  // =========================
+  // =====================================================
   // PROFILE BUTTON
-  // =========================
+  // =====================================================
+
   const profileButton = (
     <Link
       to="/profile"
-      onClick={closeMenu}
+      onClick={() => {
+        closeMenu();
+        scrollToTop();
+      }}
       className="
         flex
         items-center
@@ -165,6 +215,7 @@ const Navbar = () => {
       {/* =====================================================
           DESKTOP / TABLET NAVBAR
       ====================================================== */}
+
       <header
         className={`
           fixed
@@ -205,11 +256,17 @@ const Navbar = () => {
               justify-between
             "
           >
-            {/* =====================
+
+            {/* =================================================
                 LOGO
-            ====================== */}
+            ================================================== */}
+
             <NavLink
               to="/"
+              onClick={() => {
+                closeMenu();
+                scrollToTop();
+              }}
               className="
                 flex
                 items-center
@@ -217,7 +274,7 @@ const Navbar = () => {
               "
             >
               <img
-                src="logo-video-belajar.png"
+                src="/logo-video-belajar.png"
                 alt="Logo Video Belajar"
                 className="
                   h-9
@@ -229,9 +286,10 @@ const Navbar = () => {
               />
             </NavLink>
 
-            {/* =====================
-                DESKTOP / TABLET MENU
-            ====================== */}
+            {/* =================================================
+                DESKTOP MENU
+            ================================================== */}
+
             <nav
               className="
                 hidden
@@ -246,26 +304,65 @@ const Navbar = () => {
                 lg:mx-10
               "
             >
-              <NavLink to="/" className={navLinkClass}>
+
+              {/* HOME */}
+
+              <NavLink
+                to="/"
+                onClick={() => {
+                  setIsOpen(false);
+                  scrollToTop();
+                }}
+                className={navLinkClass}
+              >
                 Home
               </NavLink>
 
-              <NavLink to="/courses" className={navLinkClass}>
+              {/* COURSES */}
+
+              <NavLink
+                to="/courses"
+                onClick={() => {
+                  setIsOpen(false);
+                  scrollToTop();
+                }}
+                className={navLinkClass}
+              >
                 Courses
               </NavLink>
 
-              <NavLink to="/about" className={navLinkClass}>
+              {/* ABOUT */}
+
+              <NavLink
+                to="/about"
+                onClick={() => {
+                  setIsOpen(false);
+                  scrollToTop();
+                }}
+                className={navLinkClass}
+              >
                 About
               </NavLink>
 
-              <NavLink to="/contact" className={navLinkClass}>
+              {/* CONTACT */}
+
+              <NavLink
+                to="/contact"
+                onClick={() => {
+                  setIsOpen(false);
+                  scrollToTop();
+                }}
+                className={navLinkClass}
+              >
                 Contact
               </NavLink>
+
             </nav>
 
-            {/* =====================
-                AUTH BUTTONS
-            ====================== */}
+            {/* =================================================
+                AUTH BUTTON
+            ================================================== */}
+
             <div
               className="
                 hidden
@@ -280,11 +377,17 @@ const Navbar = () => {
                 flex-shrink-0
               "
             >
+
               {!isLogin ? (
                 <>
                   {/* LOGIN */}
+
                   <NavLink
                     to="/login"
+                    onClick={() => {
+                      setIsOpen(false);
+                      scrollToTop();
+                    }}
                     className="
                       inline-flex
                       items-center
@@ -318,8 +421,13 @@ const Navbar = () => {
                   </NavLink>
 
                   {/* SIGN UP */}
+
                   <NavLink
                     to="/signup"
+                    onClick={() => {
+                      setIsOpen(false);
+                      scrollToTop();
+                    }}
                     className="
                       inline-flex
                       items-center
@@ -356,10 +464,14 @@ const Navbar = () => {
                 </>
               ) : (
                 <>
+                  {/* PROFILE */}
+
                   {profileButton}
 
                   {/* LOGOUT */}
+
                   <button
+                    type="button"
                     onClick={handleLogout}
                     className="
                       inline-flex
@@ -394,14 +506,17 @@ const Navbar = () => {
                   </button>
                 </>
               )}
+
             </div>
 
-            {/* =====================
-                MOBILE HAMBURGER
-            ====================== */}
+            {/* =================================================
+                HAMBURGER
+            ================================================== */}
+
             <button
               type="button"
               aria-label="Open menu"
+              aria-expanded={isOpen}
               onClick={() => setIsOpen(true)}
               className="
                 md:hidden
@@ -425,6 +540,7 @@ const Navbar = () => {
                 className="text-gray-700"
               />
             </button>
+
           </div>
         </div>
       </header>
@@ -432,6 +548,7 @@ const Navbar = () => {
       {/* =====================================================
           MOBILE MENU
       ====================================================== */}
+
       <div
         className={`
           fixed
@@ -453,9 +570,11 @@ const Navbar = () => {
           }
         `}
       >
-        {/* =====================
+
+        {/* =================================================
             MOBILE HEADER
-        ====================== */}
+        ================================================== */}
+
         <div
           className="
             h-[72px]
@@ -471,14 +590,19 @@ const Navbar = () => {
             border-gray-200
           "
         >
+
           {/* LOGO */}
+
           <NavLink
             to="/"
-            onClick={closeMenu}
+            onClick={() => {
+              closeMenu();
+              scrollToTop();
+            }}
             className="flex items-center"
           >
             <img
-              src="logo-video-belajar.png"
+              src="/logo-video-belajar.png"
               alt="Logo Video Belajar"
               className="
                 h-9
@@ -488,7 +612,8 @@ const Navbar = () => {
             />
           </NavLink>
 
-          {/* CLOSE BUTTON */}
+          {/* CLOSE */}
+
           <button
             type="button"
             aria-label="Close menu"
@@ -513,11 +638,13 @@ const Navbar = () => {
               className="text-gray-700"
             />
           </button>
+
         </div>
 
-        {/* =====================
+        {/* =================================================
             MOBILE CONTENT
-        ====================== */}
+        ================================================== */}
+
         <div
           className="
             h-[calc(100vh-72px)]
@@ -530,6 +657,7 @@ const Navbar = () => {
             py-10
           "
         >
+
           <nav
             className="
               max-w-sm
@@ -543,10 +671,15 @@ const Navbar = () => {
               gap-7
             "
           >
+
             {/* HOME */}
+
             <NavLink
               to="/"
-              onClick={closeMenu}
+              onClick={() => {
+                closeMenu();
+                scrollToTop();
+              }}
               className={({ isActive }) => `
                 w-full
                 text-center
@@ -571,9 +704,13 @@ const Navbar = () => {
             </NavLink>
 
             {/* COURSES */}
+
             <NavLink
               to="/courses"
-              onClick={closeMenu}
+              onClick={() => {
+                closeMenu();
+                scrollToTop();
+              }}
               className={({ isActive }) => `
                 w-full
                 text-center
@@ -598,9 +735,13 @@ const Navbar = () => {
             </NavLink>
 
             {/* ABOUT */}
+
             <NavLink
               to="/about"
-              onClick={closeMenu}
+              onClick={() => {
+                closeMenu();
+                scrollToTop();
+              }}
               className={({ isActive }) => `
                 w-full
                 text-center
@@ -624,10 +765,14 @@ const Navbar = () => {
               About
             </NavLink>
 
-            {/* PROGRAM */}
+            {/* CONTACT */}
+
             <NavLink
-              to="/program"
-              onClick={closeMenu}
+              to="/contact"
+              onClick={() => {
+                closeMenu();
+                scrollToTop();
+              }}
               className={({ isActive }) => `
                 w-full
                 text-center
@@ -648,43 +793,26 @@ const Navbar = () => {
                 }
               `}
             >
-              Program
+              Contact
             </NavLink>
 
-            {/* =====================
+            {/* =================================================
                 MOBILE AUTH
-            ====================== */}
-            <div
-              className="
-                w-full
+            ================================================== */}
 
-                max-w-xs
-                sm:max-w-sm
+            <div className="w-full pt-5 border-t border-gray-200">
 
-                pt-5
-
-                flex
-                flex-col
-
-                gap-3
-              "
-            >
               {!isLogin ? (
-                <>
-                  {/* MOBILE LOGIN */}
-                  <NavLink
-                    to="/login"
-                    onClick={closeMenu}
+                <div className="flex flex-col gap-3">
+
+                  {/* LOGIN */}
+
+                  <button
+                    type="button"
+                    onClick={() => handleNavigation("/login")}
                     className="
                       w-full
-
-                      min-h-[46px]
-
-                      px-6
-
-                      flex
-                      items-center
-                      justify-center
+                      h-12
 
                       rounded-lg
 
@@ -699,22 +827,16 @@ const Navbar = () => {
                     "
                   >
                     Login
-                  </NavLink>
+                  </button>
 
-                  {/* MOBILE SIGN UP */}
-                  <NavLink
-                    to="/signup"
-                    onClick={closeMenu}
+                  {/* SIGN UP */}
+
+                  <button
+                    type="button"
+                    onClick={() => handleNavigation("/signup")}
                     className="
                       w-full
-
-                      min-h-[46px]
-
-                      px-6
-
-                      flex
-                      items-center
-                      justify-center
+                      h-12
 
                       rounded-lg
 
@@ -731,29 +853,86 @@ const Navbar = () => {
                     "
                   >
                     Sign Up
-                  </NavLink>
-                </>
-              ) : (
-                <>
-                  {/* MOBILE PROFILE */}
-                  <div className="w-full">
-                    {profileButton}
-                  </div>
+                  </button>
 
-                  {/* MOBILE LOGOUT */}
+                </div>
+              ) : (
+                <div className="flex flex-col gap-3">
+
+                  {/* PROFILE */}
+
+                  <Link
+                    to="/profile"
+                    onClick={() => {
+                      closeMenu();
+                      scrollToTop();
+                    }}
+                    className="
+                      flex
+                      items-center
+                      justify-center
+                      gap-3
+
+                      w-full
+                      h-12
+
+                      rounded-lg
+
+                      border
+                      border-green-500
+
+                      text-green-600
+
+                      font-medium
+                    "
+                  >
+
+                    {user?.profileImage ? (
+                      <img
+                        src={user.profileImage}
+                        alt="Profile"
+                        className="
+                          w-8
+                          h-8
+                          rounded-full
+                          object-cover
+                        "
+                      />
+                    ) : (
+                      <span
+                        className="
+                          w-8
+                          h-8
+                          rounded-full
+
+                          bg-green-100
+                          text-green-700
+
+                          flex
+                          items-center
+                          justify-center
+
+                          font-semibold
+                        "
+                      >
+                        {(user?.nama || "U")
+                          .charAt(0)
+                          .toUpperCase()}
+                      </span>
+                    )}
+
+                    <span>Edit Profile</span>
+
+                  </Link>
+
+                  {/* LOGOUT */}
+
                   <button
                     type="button"
                     onClick={handleLogout}
                     className="
                       w-full
-
-                      min-h-[46px]
-
-                      px-6
-
-                      flex
-                      items-center
-                      justify-center
+                      h-12
 
                       rounded-lg
 
@@ -769,11 +948,16 @@ const Navbar = () => {
                   >
                     Logout
                   </button>
-                </>
+
+                </div>
               )}
+
             </div>
+
           </nav>
+
         </div>
+
       </div>
     </>
   );
