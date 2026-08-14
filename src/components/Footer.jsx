@@ -59,7 +59,7 @@ const Footer = () => {
 
             <ul className="space-y-3 text-lg text-gray-800">
               <li>consult@.com</li>
-              <li>Indonesia, Bekasi</li>
+              <li>Bekasi, Indonesia</li>
               <li>(+62) 811 2345 6789</li>
             </ul>
           </div>

@@ -1,83 +1,256 @@
+import { Link } from "react-router-dom";
+
 const About = () => {
+  const statistics = [
+    {
+      number: "2",
+      suffix: "+",
+      label: "Years of experience",
+    },
+    {
+      number: "5",
+      suffix: "+",
+      label: "Program",
+    },
+    {
+      number: "1",
+      suffix: "k",
+      label: "Students worldwide",
+    },
+    {
+      number: "90",
+      suffix: "%",
+      label: "Student satisfactions",
+    },
+  ];
+
   return (
-    <div className="about bg-white py-30">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          {/* Statistik */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12 text-center mb-24">
-            <div>
-              <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-black">
-              2<span className="text-green-500">+</span>
+    <section className="bg-[#f7f8fa] py-10 sm:py-14 md:py-16 lg:py-20">
+      <div className="mx-auto max-w-[1280px] px-6 sm:px-8 lg:px-10">
+
+        {/* =========================
+            STATISTICS
+        ========================== */}
+        <div
+          className="
+            grid grid-cols-4
+            gap-2
+            sm:gap-6
+            md:gap-10
+            lg:gap-16
+            text-center
+            mb-16
+            sm:mb-20
+            md:mb-20
+            lg:mb-20
+          "
+        >
+          {statistics.map((item, index) => (
+            <div key={index} className="flex flex-col items-center">
+              {/* Number */}
+              <h2
+                className="
+                  whitespace-nowrap
+                  text-[22px]
+                  leading-none
+                  font-bold
+                  text-black
+                  sm:text-4xl
+                  md:text-5xl
+                  lg:text-6xl
+                "
+              >
+                {item.number}
+                <span className="text-green-500">
+                  {item.suffix}
+                </span>
               </h2>
-              <p className="mt-4 text-gray-500 text-lg">
-              Years of experience
+
+              {/* Label */}
+              <p
+                className="
+                  mt-4
+                  max-w-[75px]
+                  text-[10px]
+                  leading-5
+                  text-gray-500
+                  sm:mt-4
+                  sm:max-w-none
+                  sm:text-sm
+                  sm:leading-6
+                  md:text-base
+                  lg:text-lg
+                "
+              >
+                {item.label}
               </p>
             </div>
+          ))}
+        </div>
 
-          <div>
-              <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-black">
-              5<span className="text-green-500">+</span>
-              </h2>
-              <p className="mt-4 text-gray-500 text-lg">
-                Program
-              </p>
+        {/* =========================
+            ABOUT CONTENT
+        ========================== */}
+        <div
+          className="
+            grid
+            grid-cols-1
+            lg:grid-cols-2
+            items-center
+            gap-10
+            sm:gap-12
+            md:gap-14
+            lg:gap-16
+          "
+        >
+
+          {/* =========================
+              IMAGE
+          ========================== */}
+          <div
+            className="
+              order-1
+              lg:order-2
+              w-full
+            "
+          >
+            <img
+              src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=2671&auto=format&fit=crop"
+              alt="About Us"
+              className="
+                block
+                w-full
+                h-30
+                object-cover
+                rounded-2xl
+                sm:h-50
+                sm:rounded-3xl
+                md:h-60
+                lg:h-60
+                xl:h-60
+              "
+            />
           </div>
 
-          <div>
-            <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-black">
-            1<span className="text-green-500">k</span>
-            </h2>
-            <p className="mt-4 text-gray-500 text-lg">
-              Students worldwide
+          {/* =========================
+              TEXT CONTENT
+          ========================== */}
+          <div
+            className="
+              order-2
+              lg:order-1
+              w-full
+              text-center
+              lg:text-left
+            "
+          >
+            {/* Label */}
+            <p
+              className="
+                text-sm
+                font-medium
+                text-gray-500
+                sm:text-base
+                md:text-lg
+              "
+            >
+              About us
             </p>
-          </div>
 
-          <div>
-            <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-black">
-            90<span className="text-green-500">%</span>
+            {/* Heading */}
+            <h2
+              className="
+                mt-3
+                text-[20px]
+                leading-[1.25]
+                font-bold
+                tracking-tight
+                text-[#1f2937]
+                sm:mt-4
+                sm:text-3xl
+                md:text-4xl
+                lg:text-4xl
+                xl:text-4xl
+              "
+            >
+              Platform E-Learning untuk
+              <br className="hidden sm:block" />
+              Keterampilan Digital
             </h2>
-            <p className="mt-4 text-gray-500 text-lg">
-              Student satisfactions
+
+            {/* Description */}
+            <p
+              className="
+                mx-auto
+                mt-4
+                max-w-[310px]
+                text-[13px]
+                leading-5
+                text-gray-500
+                sm:mt-5
+                sm:max-w-[550px]
+                sm:text-sm
+                sm:leading-6
+                md:text-base
+                md:leading-7
+                lg:mx-0
+                lg:max-w-[560px]
+                lg:text-base
+              "
+            >
+              Lorem ipsum dolor sit amet consectetur. Porttitor scelerisque
+              odio bibendum scelerisque massa fermentum. Purus lacus velit
+              tincidunt consectetur.
             </p>
+
+            {/* Button */}
+            <div
+              className="
+                mt-6
+                flex
+                justify-center
+                lg:justify-start
+                sm:mt-7
+                md:mt-8
+              "
+            >
+              <Link
+                to="/about"
+                className="
+                  inline-flex
+                  items-center
+                  justify-center
+                  rounded-xl
+                  bg-green-500
+                  px-7
+                  py-3
+                  text-sm
+                  font-semibold
+                  text-white
+                  transition-all
+                  duration-300
+                  hover:bg-green-600
+                  hover:shadow-md
+                  focus:outline-none
+                  focus:ring-2
+                  focus:ring-green-500
+                  focus:ring-offset-2
+                  sm:px-8
+                  sm:py-3.5
+                  sm:text-base
+                  md:px-9
+                  md:py-4
+                "
+              >
+                Pelajari lebih lanjut
+              </Link>
+            </div>
           </div>
-          </div>
-          <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
 
-      {/* Text */}
-      <div>
-        <span className="text-gray-500 text-xl">
-          About us
-        </span>
-
-        <h2 className="mt-4 text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight text-gray-900">
-          Platform E-Learning untuk
-          <br />
-          Keterampilan Digital
-        </h2>
-
-        <p className="mt-6 text-lg text-gray-500 leading-8 max-w-lg">
-          Lorem ipsum dolor sit amet consectetur. Porttitor scelerisque odio
-          bibendum scelerisque massa fermentum. Purus lacus velit tincidunt
-          consectetur.
-        </p>
-
-        <button type="button" className="mt-10 bg-green-500 hover:bg-green-600 transition text-white font-semibold px-10 py-4 rounded-xl shadow-sm">
-          Pelajari lebih lanjut
-        </button>
-      </div>
-
-      {/* Image */}
-      <div>
-        <img
-          src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=2671&auto=format&fit=crop"
-          alt="About Us"
-          className="w-full h-72 sm:h-96 lg:h-100 object-cover rounded-3xl"
-        />
-      </div>
-
-    </div>
         </div>
       </div>
-  )
-}
+    </section>
+  );
+};
 
-export default About
+export default About;

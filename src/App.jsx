@@ -9,7 +9,7 @@ import SignUp from "./pages/SignUp";
 import ForgotPassword from "./pages/ForgotPassword";
 import Coursespage from "./pages/Coursespage";
 import Aboutpage from "./pages/Aboutpage";
-import Programpage from "./pages/Programpage";
+import Contactpage from "./pages/Contactpage";
 
 import Footer from "./components/Footer";
 import Profile from "./pages/Profile";
@@ -29,11 +29,11 @@ function App() {
         <Route element={<MainLayout />}>
           <Route path="/" element={<Homepage />} />
 
-          {/* Courses, About, dan Program dapat diakses tanpa login */}
+          {/* Courses, About, dan Contact dapat diakses tanpa login */}
           <Route path="/courses" element={<Coursespage />} />
-      <Route path="/profile" element={<Profile />} />
+          <Route path="/profile" element={<Profile />} />
           <Route path="/about" element={<Aboutpage />} />
-          <Route path="/program" element={<Programpage />} />
+          <Route path="/contact" element={<Contactpage />} />
         </Route>
 
         {/* ================= DEFAULT ================= */}

@@ -10,96 +10,346 @@ const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 
+  // =========================
+  // SCROLL EFFECT
+  // =========================
   useEffect(() => {
-    const onScroll = () => setIsScrolled(window.scrollY > 0);
+    const onScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
 
     window.addEventListener("scroll", onScroll);
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  useEffect(() => {
-    document.body.style.overflow = isOpen ? "hidden" : "auto";
-    document.documentElement.style.overflow = isOpen ? "hidden" : "auto";
 
     return () => {
-      document.body.style.overflow = "auto";
-      document.documentElement.style.overflow = "auto";
+      window.removeEventListener("scroll", onScroll);
+    };
+  }, []);
+
+  // =========================
+  // LOCK BODY WHEN MOBILE MENU OPEN
+  // =========================
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
+    }
+
+    return () => {
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
     };
   }, [isOpen]);
 
-  const closeMenu = () => setIsOpen(false);
+  // =========================
+  // CLOSE MOBILE MENU
+  // =========================
+  const closeMenu = () => {
+    setIsOpen(false);
+  };
 
+  // =========================
+  // LOGOUT
+  // =========================
   const handleLogout = () => {
     logout();
     closeMenu();
     navigate("/login");
   };
 
+  // =========================
+  // NAV LINK STYLE
+  // =========================
+  const navLinkClass = ({ isActive }) =>
+    `
+      relative
+      py-2
+      text-sm
+      lg:text-base
+      font-medium
+      transition-colors
+      duration-200
+      ${
+        isActive
+          ? "text-green-600"
+          : "text-gray-700 hover:text-green-600"
+      }
+
+      after:absolute
+      after:left-0
+      after:-bottom-1
+      after:h-[2px]
+      after:bg-green-500
+      after:transition-all
+      after:duration-200
+      ${
+        isActive
+          ? "after:w-full"
+          : "after:w-0 hover:after:w-full"
+      }
+    `;
+
+  // =========================
+  // PROFILE BUTTON
+  // =========================
   const profileButton = (
     <Link
       to="/profile"
       onClick={closeMenu}
-      className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-green-500 text-green-600 hover:bg-green-50 transition"
+      className="
+        flex
+        items-center
+        justify-center
+        gap-2
+
+        min-w-[150px]
+        h-10
+
+        px-4
+        rounded-lg
+
+        border
+        border-green-500
+
+        text-green-600
+        text-sm
+        font-medium
+
+        hover:bg-green-50
+
+        transition
+        duration-200
+      "
     >
       {user?.profileImage ? (
         <img
           src={user.profileImage}
           alt="Profile"
-          className="w-7 h-7 rounded-full object-cover"
+          className="
+            w-7
+            h-7
+            rounded-full
+            object-cover
+            flex-shrink-0
+          "
         />
       ) : (
-        <span className="w-7 h-7 rounded-full bg-green-100 text-green-700 flex items-center justify-center font-semibold">
+        <span
+          className="
+            w-7
+            h-7
+            rounded-full
+            bg-green-100
+            text-green-700
+
+            flex
+            items-center
+            justify-center
+
+            font-semibold
+            flex-shrink-0
+          "
+        >
           {(user?.nama || "U").charAt(0).toUpperCase()}
         </span>
       )}
+
       <span>Edit Profile</span>
     </Link>
   );
 
   return (
     <>
+      {/* =====================================================
+          DESKTOP / TABLET NAVBAR
+      ====================================================== */}
       <header
-        className={`fixed top-0 left-0 w-full bg-white z-50 transition-all duration-300 ${
-          isScrolled ? "shadow-md border-b border-gray-200" : ""
-        }`}
+        className={`
+          fixed
+          top-0
+          left-0
+          right-0
+          z-50
+
+          bg-white
+
+          transition-all
+          duration-300
+
+          ${
+            isScrolled
+              ? "shadow-md border-b border-gray-200"
+              : "border-b border-transparent"
+          }
+        `}
       >
-        <div className="container mx-auto px-6">
-          <div className="flex justify-between items-center h-16">
-            <NavLink to="/">
+        <div
+          className="
+            max-w-7xl
+            mx-auto
+
+            px-4
+            sm:px-6
+            lg:px-8
+          "
+        >
+          <div
+            className="
+              h-16
+              lg:h-[72px]
+
+              flex
+              items-center
+              justify-between
+            "
+          >
+            {/* =====================
+                LOGO
+            ====================== */}
+            <NavLink
+              to="/"
+              className="
+                flex
+                items-center
+                flex-shrink-0
+              "
+            >
               <img
                 src="logo-video-belajar.png"
-                alt="Logo"
-                className="h-10"
+                alt="Logo Video Belajar"
+                className="
+                  h-9
+                  sm:h-10
+                  lg:h-11
+                  w-auto
+                  object-contain
+                "
               />
             </NavLink>
 
-            <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 gap-6">
-              <NavLink to="/" className="hover:text-green-500 transition">
+            {/* =====================
+                DESKTOP / TABLET MENU
+            ====================== */}
+            <nav
+              className="
+                hidden
+                md:flex
+
+                items-center
+
+                gap-5
+                lg:gap-8
+
+                mx-6
+                lg:mx-10
+              "
+            >
+              <NavLink to="/" className={navLinkClass}>
                 Home
               </NavLink>
-              <NavLink to="/courses" className="hover:text-green-500 transition">
+
+              <NavLink to="/courses" className={navLinkClass}>
                 Courses
               </NavLink>
-              <NavLink to="/about" className="hover:text-green-500 transition">
+
+              <NavLink to="/about" className={navLinkClass}>
                 About
               </NavLink>
-              <NavLink to="/program" className="hover:text-green-500 transition">
-                Program
-              </NavLink>
-            </div>
 
-            <div className="hidden md:flex items-center gap-3">
+              <NavLink to="/contact" className={navLinkClass}>
+                Contact
+              </NavLink>
+            </nav>
+
+            {/* =====================
+                AUTH BUTTONS
+            ====================== */}
+            <div
+              className="
+                hidden
+                md:flex
+
+                items-center
+                justify-end
+
+                gap-2
+                lg:gap-3
+
+                flex-shrink-0
+              "
+            >
               {!isLogin ? (
                 <>
+                  {/* LOGIN */}
                   <NavLink
                     to="/login"
-                    className="bg-green-500 text-white px-1 py-2 rounded-lg hover:bg-green-600 transition"
+                    className="
+                      inline-flex
+                      items-center
+                      justify-center
+
+                      min-w-[100px]
+                      lg:min-w-[110px]
+
+                      h-10
+                      lg:h-11
+
+                      px-5
+
+                      rounded-lg
+
+                      bg-green-500
+                      text-white
+
+                      text-sm
+                      lg:text-base
+                      font-medium
+
+                      hover:bg-green-600
+                      active:scale-95
+
+                      transition-all
+                      duration-200
+                    "
                   >
                     Login
                   </NavLink>
+
+                  {/* SIGN UP */}
                   <NavLink
                     to="/signup"
-                    className="border border-green-500 text-green-500 px-1 py-2 rounded-lg hover:bg-green-50 transition"
+                    className="
+                      inline-flex
+                      items-center
+                      justify-center
+
+                      min-w-[100px]
+                      lg:min-w-[110px]
+
+                      h-10
+                      lg:h-11
+
+                      px-5
+
+                      rounded-lg
+
+                      border
+                      border-green-500
+
+                      text-green-500
+
+                      text-sm
+                      lg:text-base
+                      font-medium
+
+                      hover:bg-green-50
+                      active:scale-95
+
+                      transition-all
+                      duration-200
+                    "
                   >
                     Sign Up
                   </NavLink>
@@ -107,9 +357,38 @@ const Navbar = () => {
               ) : (
                 <>
                   {profileButton}
+
+                  {/* LOGOUT */}
                   <button
                     onClick={handleLogout}
-                    className="bg-red-500 text-white px-1 py-2 rounded-lg hover:bg-red-600 transition"
+                    className="
+                      inline-flex
+                      items-center
+                      justify-center
+
+                      min-w-[100px]
+                      lg:min-w-[110px]
+
+                      h-10
+                      lg:h-11
+
+                      px-5
+
+                      rounded-lg
+
+                      bg-red-500
+                      text-white
+
+                      text-sm
+                      lg:text-base
+                      font-medium
+
+                      hover:bg-red-600
+                      active:scale-95
+
+                      transition-all
+                      duration-200
+                    "
                   >
                     Logout
                   </button>
@@ -117,82 +396,384 @@ const Navbar = () => {
               )}
             </div>
 
+            {/* =====================
+                MOBILE HAMBURGER
+            ====================== */}
             <button
-              className="md:hidden"
+              type="button"
+              aria-label="Open menu"
               onClick={() => setIsOpen(true)}
+              className="
+                md:hidden
+
+                w-10
+                h-10
+
+                flex
+                items-center
+                justify-center
+
+                rounded-lg
+
+                hover:bg-gray-100
+
+                transition
+              "
             >
-              <HiOutlineMenuAlt3 size={30} className="text-gray-700" />
+              <HiOutlineMenuAlt3
+                size={30}
+                className="text-gray-700"
+              />
             </button>
           </div>
         </div>
       </header>
 
+      {/* =====================================================
+          MOBILE MENU
+      ====================================================== */}
       <div
-        className={`fixed inset-0 bg-white z-[100] md:hidden transform transition-all duration-300 ${
-          isOpen
-            ? "opacity-100 visible translate-x-0"
-            : "opacity-0 invisible translate-x-full"
-        }`}
+        className={`
+          fixed
+          inset-0
+          z-[100]
+
+          bg-white
+
+          md:hidden
+
+          transition-all
+          duration-300
+          ease-in-out
+
+          ${
+            isOpen
+              ? "opacity-100 visible translate-x-0"
+              : "opacity-0 invisible translate-x-full"
+          }
+        `}
       >
-        <div className="flex justify-between items-center h-20 px-6 border-b">
-          <NavLink to="/" onClick={closeMenu}>
+        {/* =====================
+            MOBILE HEADER
+        ====================== */}
+        <div
+          className="
+            h-[72px]
+
+            px-4
+            sm:px-6
+
+            flex
+            items-center
+            justify-between
+
+            border-b
+            border-gray-200
+          "
+        >
+          {/* LOGO */}
+          <NavLink
+            to="/"
+            onClick={closeMenu}
+            className="flex items-center"
+          >
             <img
               src="logo-video-belajar.png"
-              alt="Logo"
-              className="h-10"
+              alt="Logo Video Belajar"
+              className="
+                h-9
+                sm:h-10
+                w-auto
+              "
             />
           </NavLink>
 
-          <button onClick={closeMenu}>
-            <HiOutlineX size={32} className="text-gray-700" />
+          {/* CLOSE BUTTON */}
+          <button
+            type="button"
+            aria-label="Close menu"
+            onClick={closeMenu}
+            className="
+              w-10
+              h-10
+
+              flex
+              items-center
+              justify-center
+
+              rounded-lg
+
+              hover:bg-gray-100
+
+              transition
+            "
+          >
+            <HiOutlineX
+              size={32}
+              className="text-gray-700"
+            />
           </button>
         </div>
 
-        <nav className="flex flex-col justify-center items-center h-[calc(100vh-80px)] space-y-8">
-          <NavLink to="/" onClick={closeMenu} className="text-2xl font-semibold hover:text-green-500">
-            Home
-          </NavLink>
-          <NavLink to="/courses" onClick={closeMenu} className="text-2xl font-semibold hover:text-green-500">
-            Courses
-          </NavLink>
-          <NavLink to="/about" onClick={closeMenu} className="text-2xl font-semibold hover:text-green-500">
-            About
-          </NavLink>
-          <NavLink to="/program" onClick={closeMenu} className="text-2xl font-semibold hover:text-green-500">
-            Program
-          </NavLink>
+        {/* =====================
+            MOBILE CONTENT
+        ====================== */}
+        <div
+          className="
+            h-[calc(100vh-72px)]
 
-          <div className="w-72 pt-6 space-y-4">
-            {!isLogin ? (
-              <>
-                <NavLink
-                  to="/login"
-                  onClick={closeMenu}
-                  className="block w-full text-center bg-green-500 text-white py-3 rounded-lg"
-                >
-                  Login
-                </NavLink>
-                <NavLink
-                  to="/signup"
-                  onClick={closeMenu}
-                  className="block w-full text-center border border-green-500 text-green-500 py-3 rounded-lg"
-                >
-                  Sign Up
-                </NavLink>
-              </>
-            ) : (
-              <>
-                {profileButton}
-                <button
-                  onClick={handleLogout}
-                  className="w-full bg-red-500 text-white py-3 rounded-lg hover:bg-red-600 transition"
-                >
-                  Logout
-                </button>
-              </>
-            )}
-          </div>
-        </nav>
+            overflow-y-auto
+
+            px-6
+            sm:px-10
+
+            py-10
+          "
+        >
+          <nav
+            className="
+              max-w-sm
+              mx-auto
+
+              flex
+              flex-col
+
+              items-center
+
+              gap-7
+            "
+          >
+            {/* HOME */}
+            <NavLink
+              to="/"
+              onClick={closeMenu}
+              className={({ isActive }) => `
+                w-full
+                text-center
+
+                py-2
+
+                text-xl
+                sm:text-2xl
+
+                font-semibold
+
+                transition-colors
+
+                ${
+                  isActive
+                    ? "text-green-600"
+                    : "text-gray-800 hover:text-green-600"
+                }
+              `}
+            >
+              Home
+            </NavLink>
+
+            {/* COURSES */}
+            <NavLink
+              to="/courses"
+              onClick={closeMenu}
+              className={({ isActive }) => `
+                w-full
+                text-center
+
+                py-2
+
+                text-xl
+                sm:text-2xl
+
+                font-semibold
+
+                transition-colors
+
+                ${
+                  isActive
+                    ? "text-green-600"
+                    : "text-gray-800 hover:text-green-600"
+                }
+              `}
+            >
+              Courses
+            </NavLink>
+
+            {/* ABOUT */}
+            <NavLink
+              to="/about"
+              onClick={closeMenu}
+              className={({ isActive }) => `
+                w-full
+                text-center
+
+                py-2
+
+                text-xl
+                sm:text-2xl
+
+                font-semibold
+
+                transition-colors
+
+                ${
+                  isActive
+                    ? "text-green-600"
+                    : "text-gray-800 hover:text-green-600"
+                }
+              `}
+            >
+              About
+            </NavLink>
+
+            {/* PROGRAM */}
+            <NavLink
+              to="/program"
+              onClick={closeMenu}
+              className={({ isActive }) => `
+                w-full
+                text-center
+
+                py-2
+
+                text-xl
+                sm:text-2xl
+
+                font-semibold
+
+                transition-colors
+
+                ${
+                  isActive
+                    ? "text-green-600"
+                    : "text-gray-800 hover:text-green-600"
+                }
+              `}
+            >
+              Program
+            </NavLink>
+
+            {/* =====================
+                MOBILE AUTH
+            ====================== */}
+            <div
+              className="
+                w-full
+
+                max-w-xs
+                sm:max-w-sm
+
+                pt-5
+
+                flex
+                flex-col
+
+                gap-3
+              "
+            >
+              {!isLogin ? (
+                <>
+                  {/* MOBILE LOGIN */}
+                  <NavLink
+                    to="/login"
+                    onClick={closeMenu}
+                    className="
+                      w-full
+
+                      min-h-[46px]
+
+                      px-6
+
+                      flex
+                      items-center
+                      justify-center
+
+                      rounded-lg
+
+                      bg-green-500
+                      text-white
+
+                      font-medium
+
+                      hover:bg-green-600
+
+                      transition
+                    "
+                  >
+                    Login
+                  </NavLink>
+
+                  {/* MOBILE SIGN UP */}
+                  <NavLink
+                    to="/signup"
+                    onClick={closeMenu}
+                    className="
+                      w-full
+
+                      min-h-[46px]
+
+                      px-6
+
+                      flex
+                      items-center
+                      justify-center
+
+                      rounded-lg
+
+                      border
+                      border-green-500
+
+                      text-green-500
+
+                      font-medium
+
+                      hover:bg-green-50
+
+                      transition
+                    "
+                  >
+                    Sign Up
+                  </NavLink>
+                </>
+              ) : (
+                <>
+                  {/* MOBILE PROFILE */}
+                  <div className="w-full">
+                    {profileButton}
+                  </div>
+
+                  {/* MOBILE LOGOUT */}
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="
+                      w-full
+
+                      min-h-[46px]
+
+                      px-6
+
+                      flex
+                      items-center
+                      justify-center
+
+                      rounded-lg
+
+                      bg-red-500
+                      text-white
+
+                      font-medium
+
+                      hover:bg-red-600
+
+                      transition
+                    "
+                  >
+                    Logout
+                  </button>
+                </>
+              )}
+            </div>
+          </nav>
+        </div>
       </div>
     </>
   );
