@@ -11,7 +11,7 @@ const categories = [
 ];
 
 export default function Coursespage() {
-  const { courses } = useCourses();
+  const { courses, loading, error } = useCourses();
   const { isAdmin } = useAuth();
   const [category, setCategory] = useState("Semua Kelas");
 
@@ -90,7 +90,21 @@ export default function Coursespage() {
           </div>
         </div>
 
+        {/* Status API */}
+        {loading && (
+          <p className="text-center text-gray-500 mt-10">
+            Memuat data courses...
+          </p>
+        )}
+
+        {error && !loading && (
+          <div className="mt-10 rounded-lg bg-red-50 border border-red-200 p-4 text-center text-red-600">
+            {error}
+          </div>
+        )}
+
         {/* Course List */}
+        {!loading && !error && (
         <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
           {filteredCourses.map((course) => (
@@ -100,7 +114,7 @@ export default function Coursespage() {
             >
               {/* Course Image */}
               <img
-                src={course.image}
+                src={course.thumbnail || course.image}
                 alt={course.title}
                 className="w-full h-56 object-cover"
               />
@@ -136,7 +150,7 @@ export default function Coursespage() {
                     </p>
 
                     <p className="text-sm text-gray-500">
-                      {course.role}
+                      {course.instructorRole || course.role}
                     </p>
                   </div>
                 </div>
@@ -167,9 +181,10 @@ export default function Coursespage() {
           ))}
 
         </div>
+        )}
 
         {/* Empty State */}
-        {filteredCourses.length === 0 && (
+        {!loading && !error && filteredCourses.length === 0 && (
           <p className="text-center text-gray-500 mt-10">
             Belum ada course pada kategori ini.
           </p>

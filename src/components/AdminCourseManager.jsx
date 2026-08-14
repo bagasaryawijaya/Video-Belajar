@@ -104,7 +104,7 @@ export default function AdminCourseManager() {
   // ==============================
   // SUBMIT FORM
   // ==============================
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!form.title.trim()) {
@@ -124,25 +124,36 @@ export default function AdminCourseManager() {
       price: Number(form.price) || 0,
     };
 
-    if (editingId) {
-      updateCourse(editingId, courseData);
-    } else {
-      addCourse(courseData);
-    }
+    try {
+      if (editingId) {
+        await updateCourse(editingId, courseData);
+        alert("Course berhasil diperbarui.");
+      } else {
+        await addCourse(courseData);
+        alert("Course berhasil ditambahkan.");
+      }
 
-    closeForm();
+      closeForm();
+    } catch (error) {
+      alert(error.message || "Terjadi kesalahan saat menyimpan course.");
+    }
   };
 
   // ==============================
   // DELETE COURSE
   // ==============================
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     const confirmed = window.confirm(
       "Apakah kamu yakin ingin menghapus course ini?"
     );
 
-    if (confirmed) {
-      deleteCourse(id);
+    if (!confirmed) return;
+
+    try {
+      await deleteCourse(id);
+      alert("Course berhasil dihapus.");
+    } catch (error) {
+      alert(error.message || "Gagal menghapus course.");
     }
   };
 
@@ -438,14 +449,26 @@ export default function AdminCourseManager() {
                   Kategori
                 </label>
 
-                <input
+                <select
                   name="category"
-                  type="text"
                   value={form.category}
                   onChange={handleChange}
-                  placeholder="Contoh: UI/UX Design"
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-green-500"
-                />
+                  required
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
+                >
+                  <option value="" disabled>
+                    Pilih kategori
+                  </option>
+                  <option value="UI/UX Design">
+                    UI/UX Design
+                  </option>
+                  <option value="Web Development">
+                    Web Development
+                  </option>
+                  <option value="Data Analyst">
+                    Data Analyst
+                  </option>
+                </select>
               </div>
 
               {/* ==============================

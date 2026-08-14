@@ -1,0 +1,97 @@
+import axios from "axios";
+
+const API_URL = import.meta.env.VITE_API_URL;
+
+if (!API_URL) {
+  console.warn("VITE_API_URL belum dikonfigurasi.");
+}
+
+const api = axios.create({
+  baseURL: API_URL,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
+// Mengubah data dari MockAPI menjadi format yang digunakan aplikasi
+const mapCourseFromApi = (course) => ({
+  id: course.id,
+  title: course.title || "",
+  description: course.deskripsi ?? course.description ?? "",
+  thumbnail: course["thumbnail-course"] ?? course.thumbnail ?? course.image ?? "",
+  instructor: course.instruktur ?? course.instructor ?? "",
+  instructorRole: course["jabatan-instruktur"] ?? course.instructorRole ?? course.role ?? "",
+  category: course.kategori ?? course.category ?? "",
+  level: course.level ?? "Beginner",
+  rating: Number(course.rating) || 0,
+  reviews: Number(course["jumlah-review"] ?? course.reviews) || 0,
+  price: Number(course.harga ?? course.price) || 0,
+});
+
+// Mengubah format aplikasi menjadi format field MockAPI
+const mapCourseToApi = (course) => ({
+  title: course.title,
+  deskripsi: course.description || "",
+  "thumbnail-course": course.thumbnail || "",
+  instruktur: course.instructor || "",
+  "jabatan-instruktur": course.instructorRole || "",
+  kategori: course.category || "",
+  level: course.level || "Beginner",
+  rating: Number(course.rating) || 0,
+  "jumlah-review": Number(course.reviews) || 0,
+  harga: Number(course.price) || 0,
+});
+
+// GET - mengambil seluruh course
+export const getCourses = async () => {
+  try {
+    const response = await api.get("/");
+    return response.data.map(mapCourseFromApi);
+  } catch (error) {
+    console.error("Gagal mengambil courses:", error);
+    throw new Error(
+      error.response?.data?.message || "Gagal mengambil data courses."
+    );
+  }
+};
+
+// ADD - menambahkan course baru
+export const addCourse = async (course) => {
+  try {
+    const response = await api.post("/", mapCourseToApi(course));
+    return mapCourseFromApi(response.data);
+  } catch (error) {
+    console.error("Gagal menambahkan course:", error);
+    throw new Error(
+      error.response?.data?.message || "Gagal menambahkan course."
+    );
+  }
+};
+
+// UPDATE - mengubah course berdasarkan ID
+export const updateCourse = async (id, courseData) => {
+  try {
+    const response = await api.put(`/${id}`, mapCourseToApi(courseData));
+    return mapCourseFromApi(response.data);
+  } catch (error) {
+    console.error("Gagal mengubah course:", error);
+    throw new Error(
+      error.response?.data?.message || "Gagal mengubah course."
+    );
+  }
+};
+
+// DELETE - menghapus course berdasarkan ID
+export const deleteCourse = async (id) => {
+  try {
+    await api.delete(`/${id}`);
+    return id;
+  } catch (error) {
+    console.error("Gagal menghapus course:", error);
+    throw new Error(
+      error.response?.data?.message || "Gagal menghapus course."
+    );
+  }
+};
+
+export default api;
