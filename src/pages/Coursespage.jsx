@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSelector } from "react-redux";
 import { useCourses } from "../context/CourseContext";
 import { useAuth } from "../context/AuthContext";
 import AdminCourseManager from "../components/AdminCourseManager";
@@ -11,7 +12,9 @@ const categories = [
 ];
 
 export default function Coursespage() {
-  const { courses, loading, error } = useCourses();
+  const { loading, error } = useCourses();
+  // GET data dari Redux store menggunakan useSelector.
+  const courses = useSelector((state) => state.courses);
   const { isAdmin } = useAuth();
   const [category, setCategory] = useState("Semua Kelas");
 

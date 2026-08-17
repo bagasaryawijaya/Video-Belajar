@@ -166,4 +166,7 @@ export const deleteCourse = async (id) => {
   }
 };
 
+// Alias GET sesuai kebutuhan integrasi komponen.
+export const getData = getCourses;
+
 export default api;

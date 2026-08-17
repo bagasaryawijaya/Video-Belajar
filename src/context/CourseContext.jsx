@@ -1,26 +1,34 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import {
   getCourses as getCoursesApi,
   addCourse as addCourseApi,
   updateCourse as updateCourseApi,
   deleteCourse as deleteCourseApi,
 } from "../services/api";
+import {
+  setCourses,
+  addCourseToStore,
+  updateCourseInStore,
+  deleteCourseFromStore,
+} from "../store/redux/courseReducer";
 
 const CourseContext = createContext();
 
 export function CourseProvider({ children }) {
-  const [courses, setCourses] = useState([]);
+  const dispatch = useDispatch();
+  const courses = useSelector((state) => state.courses);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // GET
+  // GET API -> Redux
   const getCourses = useCallback(async () => {
     setLoading(true);
     setError("");
 
     try {
       const data = await getCoursesApi();
-      setCourses(data);
+      dispatch(setCourses(data));
       return data;
     } catch (err) {
       setError(err.message);
@@ -28,16 +36,15 @@ export function CourseProvider({ children }) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [dispatch]);
 
-  // Ambil data dari MockAPI ketika aplikasi pertama kali dibuka
   useEffect(() => {
     getCourses().catch(() => {
       // Error sudah disimpan di state error.
     });
   }, [getCourses]);
 
-  // ADD
+  // ADD API -> Redux
   const addCourse = async (course) => {
     setError("");
 
@@ -49,7 +56,7 @@ export function CourseProvider({ children }) {
         price: Number(course.price) || 0,
       });
 
-      setCourses((prev) => [...prev, newCourse]);
+      dispatch(addCourseToStore(newCourse));
       return newCourse;
     } catch (err) {
       setError(err.message);
@@ -57,7 +64,7 @@ export function CourseProvider({ children }) {
     }
   };
 
-  // UPDATE
+  // EDIT API -> Redux
   const updateCourse = async (id, courseData) => {
     setError("");
 
@@ -69,12 +76,7 @@ export function CourseProvider({ children }) {
         price: Number(courseData.price) || 0,
       });
 
-      setCourses((prev) =>
-        prev.map((course) =>
-          String(course.id) === String(id) ? updatedCourse : course
-        )
-      );
-
+      dispatch(updateCourseInStore(updatedCourse));
       return updatedCourse;
     } catch (err) {
       setError(err.message);
@@ -82,16 +84,13 @@ export function CourseProvider({ children }) {
     }
   };
 
-  // DELETE
+  // DELETE API -> Redux
   const deleteCourse = async (id) => {
     setError("");
 
     try {
       await deleteCourseApi(id);
-
-      setCourses((prev) =>
-        prev.filter((course) => String(course.id) !== String(id))
-      );
+      dispatch(deleteCourseFromStore(id));
     } catch (err) {
       setError(err.message);
       throw err;
