@@ -1,186 +1,109 @@
 import axios from "axios";
 
+// URL MockAPI dari environment variable
 const API_URL = import.meta.env.VITE_API_URL;
 
 if (!API_URL) {
-  console.warn("VITE_API_URL belum dikonfigurasi.");
+  throw new Error("VITE_API_URL belum dikonfigurasi.");
 }
 
+// Instance Axios
 const api = axios.create({
   baseURL: API_URL,
   headers: {
     "Content-Type": "application/json",
+    Accept: "application/json",
   },
 });
 
-// Mengubah data dari MockAPI menjadi format yang digunakan aplikasi
-const mapCourseFromApi = (course) => ({
-  id: course.id,
-  title: course.title || "",
-  description: course.deskripsi ?? course.description ?? "",
-  thumbnail:
-    course["thumbnail-course"] ??
-    course.thumbnail ??
-    course.image ??
-    "",
-  instructor:
-    course.instruktur ??
-    course.instructor ??
-    "",
-  instructorRole:
-    course["jabatan-instruktur"] ??
-    course.instructorRole ??
-    course.role ??
-    "",
-  category:
-    normalizeCategory(course.kategori ?? course.category ?? ""),
-  level: course.level ?? "Beginner",
-  rating: Number(course.rating) || 0,
-  reviews:
-    Number(course["jumlah-review"] ?? course.reviews) || 0,
-  price:
-    Number(course.harga ?? course.price) || 0,
-});
-
-// Mengubah format aplikasi menjadi format field MockAPI
-const ALLOWED_CATEGORIES = [
-  "UI/UX Design",
-  "Web Development",
-  "Data Analyst",
-];
-
-const normalizeCategory = (category) =>
-  ALLOWED_CATEGORIES.includes(category) ? category : "";
-
-const mapCourseToApi = (course) => ({
-  title: course.title || "",
-  deskripsi: course.description || "",
-  // Schema MockAPI: thumbnail-course = String.
-  // Nilainya dapat berupa URL gambar atau Data URL hasil upload komputer.
-  "thumbnail-course": typeof course.thumbnail === "string"
-    ? course.thumbnail
-    : "",
-
-  instruktur: course.instructor || "",
-  "jabatan-instruktur": course.instructorRole || "",
-  kategori: normalizeCategory(course.category),
-  level: course.level || "Beginner",
-  rating: Number(course.rating) || 0,
-  "jumlah-review": Number(course.reviews) || 0,
-  harga: Number(course.price) || 0,
-});
-
-// Helper untuk menangani error API
-const getErrorMessage = (error, defaultMessage) => {
-  if (axios.isAxiosError(error)) {
-    return (
-      error.response?.data?.message ||
-      error.response?.data?.error ||
-      error.message ||
-      defaultMessage
-    );
-  }
-
-  if (error instanceof Error) {
-    return error.message || defaultMessage;
-  }
-
-  return defaultMessage;
-};
-
-// GET - mengambil seluruh course
-// MockAPI umumnya mengembalikan array, tetapi beberapa konfigurasi/proxy
-// dapat mengembalikan object seperti { data: [...] }. Normalisasi di sini
-// supaya komponen tidak pernah memanggil .map() pada object.
-const extractCourseArray = (payload) => {
-  if (Array.isArray(payload)) return payload;
-
-  if (payload && Array.isArray(payload.data)) return payload.data;
-  if (payload && Array.isArray(payload.courses)) return payload.courses;
-  if (payload && Array.isArray(payload.results)) return payload.results;
-
-  return [];
-};
-
+// =========================
+// GET - Ambil semua courses
+// =========================
 export const getCourses = async () => {
   try {
-    const response = await api.get("/");
-    const courseData = extractCourseArray(response?.data);
+    const response = await api.get("");
 
-    return courseData.map(mapCourseFromApi);
+    // MockAPI seharusnya mengembalikan array
+    if (Array.isArray(response.data)) {
+      return response.data;
+    }
+
+    // Pengaman jika response dibungkus object
+    if (Array.isArray(response.data?.data)) {
+      return response.data.data;
+    }
+
+    if (Array.isArray(response.data?.courses)) {
+      return response.data.courses;
+    }
+
+    console.error("Format response GET tidak valid:", response.data);
+    return [];
   } catch (error) {
-    console.error("Gagal mengambil courses:", error);
-
-    throw new Error(
-      getErrorMessage(error, "Gagal mengambil data courses."),
-      {
-        cause: error,
-      }
-    );
+    console.error("GET courses gagal:", error);
+    throw error;
   }
 };
 
-// ADD - menambahkan course baru
+// =========================
+// GET - Ambil course by ID
+// =========================
+export const getCourseById = async (id) => {
+  try {
+    const response = await api.get(`/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error(`GET course ${id} gagal:`, error);
+    throw error;
+  }
+};
+
+// =========================
+// POST - Tambah course
+// =========================
 export const addCourse = async (course) => {
   try {
-    const response = await api.post(
-      "/",
-      mapCourseToApi(course)
-    );
+    const response = await api.post("", course);
 
-    return mapCourseFromApi(response.data);
+    return response.data;
   } catch (error) {
-    console.error("Gagal menambahkan course:", error);
-
-    throw new Error(
-      getErrorMessage(error, "Gagal menambahkan course."),
-      {
-        cause: error,
-      }
-    );
+    console.error("ADD course gagal:", error);
+    console.error("Status:", error.response?.status);
+    console.error("Response:", error.response?.data);
+    throw error;
   }
 };
 
-// UPDATE - mengubah course berdasarkan ID
-export const updateCourse = async (id, courseData) => {
+// =========================
+// PUT - Edit course
+// =========================
+export const updateCourse = async (id, course) => {
   try {
-    const response = await api.put(
-      `/${id}`,
-      mapCourseToApi(courseData)
-    );
+    const response = await api.put(`/${id}`, course);
 
-    return mapCourseFromApi(response.data);
+    return response.data;
   } catch (error) {
-    console.error("Gagal mengubah course:", error);
-
-    throw new Error(
-      getErrorMessage(error, "Gagal mengubah course."),
-      {
-        cause: error,
-      }
-    );
+    console.error(`UPDATE course ${id} gagal:`, error);
+    console.error("Status:", error.response?.status);
+    console.error("Response:", error.response?.data);
+    throw error;
   }
 };
 
-// DELETE - menghapus course berdasarkan ID
+// =========================
+// DELETE - Hapus course
+// =========================
 export const deleteCourse = async (id) => {
   try {
-    await api.delete(`/${id}`);
+    const response = await api.delete(`/${id}`);
 
-    return id;
+    return response.data;
   } catch (error) {
-    console.error("Gagal menghapus course:", error);
-
-    throw new Error(
-      getErrorMessage(error, "Gagal menghapus course."),
-      {
-        cause: error,
-      }
-    );
+    console.error(`DELETE course ${id} gagal:`, error);
+    console.error("Status:", error.response?.status);
+    console.error("Response:", error.response?.data);
+    throw error;
   }
 };
-
-// Alias GET sesuai kebutuhan integrasi komponen.
-export const getData = getCourses;
 
 export default api;
