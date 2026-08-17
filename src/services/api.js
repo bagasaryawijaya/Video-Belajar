@@ -89,11 +89,25 @@ const getErrorMessage = (error, defaultMessage) => {
 };
 
 // GET - mengambil seluruh course
+// MockAPI umumnya mengembalikan array, tetapi beberapa konfigurasi/proxy
+// dapat mengembalikan object seperti { data: [...] }. Normalisasi di sini
+// supaya komponen tidak pernah memanggil .map() pada object.
+const extractCourseArray = (payload) => {
+  if (Array.isArray(payload)) return payload;
+
+  if (payload && Array.isArray(payload.data)) return payload.data;
+  if (payload && Array.isArray(payload.courses)) return payload.courses;
+  if (payload && Array.isArray(payload.results)) return payload.results;
+
+  return [];
+};
+
 export const getCourses = async () => {
   try {
     const response = await api.get("/");
+    const courseData = extractCourseArray(response?.data);
 
-    return response.data.map(mapCourseFromApi);
+    return courseData.map(mapCourseFromApi);
   } catch (error) {
     console.error("Gagal mengambil courses:", error);
 
