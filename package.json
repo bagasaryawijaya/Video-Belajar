@@ -10,5 +10,9 @@
   },
   "devDependencies": {
     "concurrently": "^9.1.2"
+  },
+  "dependencies": {
+    "mysql2": "^3.24.2",
+    "sequelize": "^6.37.8"
   }
 }
