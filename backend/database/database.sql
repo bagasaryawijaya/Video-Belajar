@@ -1,18 +1,3 @@
--- ================================================================
--- VIDEO BELAJAR - DATABASE LENGKAP
--- File tunggal untuk MySQL Workbench
---
--- Cara pakai:
--- 1. Buka MySQL Workbench dan koneksikan ke MySQL Server.
--- 2. Buka file ini (File > Open SQL Script).
--- 3. Jalankan seluruh script dengan tombol petir (Execute).
--- 4. Refresh Schemas. Database: video_belajar
---
--- Script ini membuat struktur database + data demo.
--- Aman dijalankan ulang: tabel tidak dihapus dan data demo memakai
--- INSERT ... ON DUPLICATE KEY / INSERT IGNORE.
--- ================================================================
-
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
