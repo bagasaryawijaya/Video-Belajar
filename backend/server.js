@@ -20,7 +20,7 @@ function seedAdminsOnce() {
 }
 await seedAdminsOnce();
 
-const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:5173")
+const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:5173", "https://video-belajar-three.vercel.app/")
   .split(",")
   .map((v) => v.trim())
   .filter(Boolean);
