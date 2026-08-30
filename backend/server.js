@@ -20,17 +20,28 @@ function seedAdminsOnce() {
 }
 await seedAdminsOnce();
 
-const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:5173", "https://video-belajar-three.vercel.app/")
+const allowedOrigins = (
+  process.env.CORS_ORIGIN ||
+  "http://localhost:5173,https://video-belajar-three.vercel.app"
+)
   .split(",")
-  .map((v) => v.trim())
+  .map((origin) => origin.trim())
   .filter(Boolean);
 
-app.use(cors({
-  origin(origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
-    return callback(new Error(`Origin ${origin} tidak diizinkan oleh CORS`));
-  },
-}));
+app.use(
+  cors({
+    origin(origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(
+        new Error(`Origin ${origin} tidak diizinkan oleh CORS`)
+      );
+    },
+    credentials: true,
+  })
+);
 
 app.use(express.json({ limit: "8mb" }));
 
