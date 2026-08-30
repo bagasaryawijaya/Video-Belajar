@@ -5,7 +5,7 @@ import { useAuth } from "../context/AuthContext";
 
 export default function SignUp() {
   const navigate = useNavigate();
-  const { register } = useAuth();
+  const { register, loginWithGoogle } = useAuth();
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] =
@@ -20,6 +20,7 @@ export default function SignUp() {
   });
 
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
@@ -30,7 +31,7 @@ export default function SignUp() {
     setError("");
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (formData.password !== formData.confirmPassword) {
@@ -38,27 +39,25 @@ export default function SignUp() {
       return;
     }
 
-    const oldUser = JSON.parse(
-      localStorage.getItem("registeredUser")
-    );
+    setLoading(true);
+    const result = await register({
+      nama: formData.nama,
+      email: formData.email,
+      phone: `${formData.country || "+62"}${formData.phone}`,
+      password: formData.password,
+    });
 
-    if (oldUser && oldUser.email === formData.email) {
-      setError("Email sudah terdaftar.");
+    if (!result.success) {
+      setError(result.message);
+      setLoading(false);
       return;
     }
 
-    const user = {
-      nama: formData.nama,
-      email: formData.email,
-      phone: formData.phone,
-      password: formData.password,
-    };
-
-    register(user);
-
-    alert("Pendaftaran berhasil!");
-
-    navigate("/login");
+    alert("Pendaftaran berhasil. Kode verifikasi telah dikirim ke email.");
+    setLoading(false);
+    navigate("/verify-email-code", {
+      state: { email: formData.email },
+    });
   };
 
   return (
@@ -268,10 +267,22 @@ export default function SignUp() {
 
           <button
             type="button"
-            className="w-full border py-3 rounded-lg flex items-center justify-center gap-3"
+            disabled={loading}
+            onClick={async () => {
+              setError("");
+              setLoading(true);
+              const result = await loginWithGoogle();
+              setLoading(false);
+              if (!result.success) {
+                setError(result.message);
+                return;
+              }
+              navigate("/");
+            }}
+            className="w-full border py-3 rounded-lg flex items-center justify-center gap-3 disabled:opacity-60"
           >
             <FaGoogle className="text-red-500" />
-            Daftar dengan Google
+            {loading ? "Menghubungkan..." : "Daftar dengan Google"}
           </button>
 
         </form>

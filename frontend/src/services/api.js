@@ -8,6 +8,13 @@ const api = axios.create({
   timeout: 15000,
 });
 
+
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("accessToken");
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
+
 const unwrap = (response) => response.data?.data ?? response.data;
 
 const handleError = (error) => {

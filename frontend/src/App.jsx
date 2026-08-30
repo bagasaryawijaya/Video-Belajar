@@ -15,6 +15,7 @@ import AdminRoute from "./components/AdminRoute";
 import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
 import ForgotPassword from "./pages/ForgotPassword";
+import VerifyEmail from "./pages/VerifyEmail";
 import Profile from "./pages/Profile";
 import MyCourses from "./pages/MyCourses";
 import Orders from "./pages/Orders";
@@ -53,6 +54,8 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
+        <Route path="/verify-email-code" element={<VerifyEmail />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

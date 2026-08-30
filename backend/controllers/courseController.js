@@ -49,8 +49,71 @@ LEFT JOIN users u ON u.user_id = c.instructor_id`;
 
 export const getCourses = async (req, res, next) => {
   try {
-    const [rows] = await db.query(`${baseSelect} ORDER BY c.created_at DESC`);
-    res.json({ success: true, data: rows.map(normalizeCourse) });
+    const {
+      q = '',
+      search = '',
+      category,
+      level,
+      minPrice,
+      maxPrice,
+      sortBy = 'created_at',
+      order = 'desc',
+    } = req.query;
+
+    const conditions = [];
+    const params = [];
+    const keyword = String(q || search || '').trim();
+
+    if (keyword) {
+      conditions.push('(c.course_title LIKE ? OR c.description LIKE ? OR cat.category_name LIKE ?)');
+      const like = `%${keyword}%`;
+      params.push(like, like, like);
+    }
+    if (category) {
+      conditions.push('cat.category_slug = ?');
+      params.push(String(category).toLowerCase());
+    }
+    if (level) {
+      conditions.push('c.level = ?');
+      params.push(String(level).toLowerCase());
+    }
+    if (minPrice !== undefined && minPrice !== '') {
+      conditions.push('c.price >= ?');
+      params.push(Number(minPrice));
+    }
+    if (maxPrice !== undefined && maxPrice !== '') {
+      conditions.push('c.price <= ?');
+      params.push(Number(maxPrice));
+    }
+
+    const sortMap = {
+      title: 'c.course_title',
+      price: 'c.price',
+      rating: 'c.average_rating',
+      students: 'c.total_students',
+      created_at: 'c.created_at',
+    };
+    const sortColumn = sortMap[sortBy] || sortMap.created_at;
+    const sortOrder = String(order).toLowerCase() === 'asc' ? 'ASC' : 'DESC';
+    const where = conditions.length ? ` WHERE ${conditions.join(' AND ')}` : '';
+
+    const [rows] = await db.query(
+      `${baseSelect}${where} ORDER BY ${sortColumn} ${sortOrder}`,
+      params
+    );
+
+    res.json({
+      success: true,
+      data: rows.map(normalizeCourse),
+      meta: {
+        search: keyword,
+        category: category || null,
+        level: level || null,
+        sortBy,
+        order: sortOrder.toLowerCase(),
+        total: rows.length,
+      },
+    });
   } catch (e) { next(e); }
 };
 

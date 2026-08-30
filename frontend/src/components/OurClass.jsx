@@ -1,56 +1,247 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useCourses } from "../context/CourseContext";
 import { courseSlug } from "../utils/slug";
 
 const OurClass = () => {
   const { courses } = useCourses();
-  const categories = Array.from(new Set(courses.map((course) => course.category).filter(Boolean)));
-  const formatPrice = (price) => `Rp ${Number(price || 0).toLocaleString("id-ID")}`;
+  const [category, setCategory] = useState("Semua Kelas");
+
+  const categories = [
+    "Semua Kelas",
+    ...Array.from(new Set(courses.map((course) => course.category).filter(Boolean))),
+  ];
+
+  const filteredCourses =
+    category === "Semua Kelas"
+      ? courses
+      : courses.filter((course) => course.category === category);
+
+  const formatPrice = (price) => {
+    return `Rp${Number(price || 0).toLocaleString("id-ID")}`;
+  };
 
   return (
-    <section className="bg-white py-16 sm:py-20" id="courses">
-      <div className="mx-auto max-w-7xl px-5 sm:px-8 lg:px-10">
-        <div className="text-center">
-          <h2 className="text-3xl font-bold text-slate-800 sm:text-4xl lg:text-5xl">Our Class</h2>
-          <p className="mx-auto mt-3 max-w-2xl text-sm text-gray-500 sm:text-base lg:text-lg">Temukan kelas berdasarkan kategori yang tersedia di halaman Courses.</p>
-        </div>
+    <div>
+      <section className="py-16 sm:py-20 bg-white" id="courses">
+        <div className="max-w-7xl mx-auto px-5">
 
-        <div className="mt-12 space-y-12">
-          {categories.map((category) => {
-            const items = courses.filter((course) => course.category === category);
-            return (
-              <div key={category}>
-                <div className="mb-5 flex items-center justify-between gap-4">
-                  <h3 className="text-xl font-bold text-slate-800 sm:text-2xl">{category}</h3>
-                  <Link to={`/courses?category=${encodeURIComponent(category)}`} className="text-sm font-semibold text-green-600 hover:underline">Lihat semua</Link>
-                </div>
-                <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                  {items.map((course) => (
-                    <Link key={course.id} to={`/courses/${courseSlug(course)}`} className="group overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
-                      <img src={course.thumbnail} alt={course.title} className="h-48 w-full object-cover transition duration-300 group-hover:scale-[1.02] sm:h-52" />
-                      <div className="p-4 sm:p-5">
-                        <span className="inline-flex rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-600">{category}</span>
-                        <h4 className="mt-3 line-clamp-2 text-base font-bold text-slate-800 sm:text-lg">{course.title}</h4>
-                        <p className="mt-2 line-clamp-2 text-sm leading-6 text-gray-500">{course.description}</p>
-                        <div className="mt-4 flex items-center justify-between gap-3">
-                          <span className="text-sm text-gray-500">{course.duration_hours || 0} jam</span>
-                          <strong className="text-lg text-green-500">{formatPrice(course.discount_active ? course.final_price : course.price)}</strong>
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+          {/* =========================
+              SECTION TITLE
+          ========================== */}
+          <div className="text-center">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-800">
+              Koleksi Video Pembelajaran Unggulan
+            </h2>
 
-        {!categories.length && <p className="mt-10 text-center text-gray-500">Belum ada course.</p>}
-        <div className="mt-12 flex justify-center sm:mt-16">
-          <Link to="/courses" className="rounded-xl bg-green-500 px-8 py-3.5 text-sm font-semibold text-white transition hover:bg-green-600 sm:px-10 sm:py-4 sm:text-base">Lihat Semua Courses</Link>
+            <p className="mt-3 text-gray-500 text-sm sm:text-base lg:text-lg">
+              Jelajahi Dunia Pengetahuan Melalui Pilihan Kami!
+            </p>
+          </div>
+
+          {/* =========================
+              CATEGORY FILTER
+          ========================== */}
+          <div className="mt-10 flex justify-center w-full">
+            <div
+              className="
+                flex
+                items-center
+                gap-1.5
+                bg-gray-100
+                rounded-full
+                p-1.5
+                max-w-full
+                overflow-x-auto
+                scrollbar-hide
+              "
+            >
+              {categories.map((item) => {
+                const isActive = category === item;
+
+                return (
+                  <button
+                    type="button"
+                    key={item}
+                    onClick={() => setCategory(item)}
+                    className={`
+                      shrink-0
+                      whitespace-nowrap
+                      rounded-full
+                      font-medium
+                      text-sm
+                      px-5
+                      py-2.5
+                      border-2
+                      transition-all
+                      duration-200
+                      ease-in-out
+                      focus:outline-none
+
+                      ${
+                        isActive
+                          ? "bg-white border-green-500"
+                          : "bg-transparent border-transparent"
+                      }
+                    `}
+                  >
+                    {item}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* =========================
+              COURSE GRID
+          ========================== */}
+          <div
+            className="
+              mt-12
+              grid
+              grid-cols-1
+              sm:grid-cols-2
+              lg:grid-cols-3
+              gap-6
+            "
+          >
+            {filteredCourses.map((course) => (
+              <Link
+                key={course.id}
+                to={`/courses/${courseSlug(course)}`}
+                className="block
+                  bg-white
+                  border
+                  border-gray-200
+                  rounded-2xl
+                  shadow-sm
+                  hover:shadow-lg
+                  transition-shadow
+                  duration-300
+                  overflow-hidden
+                "
+              >
+                {/* =========================
+                    COURSE IMAGE
+                ========================== */}
+                <img
+                  src={course.thumbnail}
+                  alt={course.title}
+                  className="
+                    w-full
+                    h-48
+                    sm:h-52
+                    lg:h-56
+                    object-cover
+                  "
+                />
+
+                {/* =========================
+                    COURSE CONTENT
+                ========================== */}
+                <div className="p-4 sm:p-5">
+
+                  {/* Title */}
+                  <h3
+                    className="
+                      text-base
+                      sm:text-lg
+                      lg:text-xl
+                      font-bold
+                      text-slate-800
+                      line-clamp-2
+                    "
+                  >
+                    {course.title}
+                  </h3>
+
+                  {/* Description */}
+                  <p
+                    className="
+                      mt-2
+                      text-xs
+                      sm:text-sm
+                      text-gray-500
+                      line-clamp-2
+                    "
+                  >
+                    {course.description}
+                  </p>
+
+                  {/* =========================
+                      PRICE
+                  ========================== */}
+                  <div
+                    className="
+                      flex
+                      justify-between
+                      items-end
+                      mt-5
+                      gap-3
+                    "
+                  >
+
+                    {/* Price */}
+                    <p
+                      className="
+                        text-lg
+                        sm:text-xl
+                        lg:text-2xl
+                        font-bold
+                        text-green-500
+                        whitespace-nowrap
+                      "
+                    >
+                      {formatPrice(course.price)}
+                    </p>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          {/* =========================
+              EMPTY STATE
+          ========================== */}
+          {filteredCourses.length === 0 && (
+            <p className="text-center text-gray-500 mt-10">
+              Belum ada course pada kategori ini.
+            </p>
+          )}
+
+          {/* =========================
+              VIEW ALL BUTTON
+          ========================== */}
+          <div className="flex justify-center mt-12 sm:mt-16">
+            <Link
+              to="/courses"
+              className="
+                inline-flex
+                items-center
+                justify-center
+                bg-green-500
+                hover:bg-green-600
+                
+                text-white
+                px-8
+                sm:px-10
+                py-3.5
+                sm:py-4
+                rounded-xl
+                font-semibold
+                text-sm
+                sm:text-base
+                transition-colors
+                duration-200
+              "
+            >
+              Lihat Semua Courses
+            </Link>
+          </div>
+
         </div>
-      </div>
-    </section>
+      </section>
+    </div>
   );
 };
 

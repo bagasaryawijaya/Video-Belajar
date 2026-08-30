@@ -5,7 +5,7 @@ import { useAuth } from "../context/AuthContext";
 
 export default function Login() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
 
   const [showPassword, setShowPassword] = useState(false);
 
@@ -15,6 +15,7 @@ export default function Login() {
   });
 
   const [error, setError] = useState("");
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
@@ -25,10 +26,10 @@ export default function Login() {
     setError("");
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const result = login(formData.email, formData.password);
+    const result = await login(formData.email, formData.password);
 
     if (result.success) {
       navigate("/");
@@ -147,12 +148,24 @@ export default function Login() {
           {/* Google */}
           <button
             type="button"
-            className="w-full border border-gray-300 rounded-lg py-3 flex justify-center items-center gap-3 hover:bg-gray-50 transition"
+            disabled={googleLoading}
+            onClick={async () => {
+              setError("");
+              setGoogleLoading(true);
+              const result = await loginWithGoogle();
+              setGoogleLoading(false);
+              if (!result.success) {
+                setError(result.message);
+                return;
+              }
+              navigate("/");
+            }}
+            className="w-full border border-gray-300 rounded-lg py-3 flex justify-center items-center gap-3 hover:bg-gray-50 transition disabled:opacity-60"
           >
             <FaGoogle className="text-xl text-red-500" />
 
             <span className="font-semibold text-gray-700">
-              Masuk dengan Google
+              {googleLoading ? "Menghubungkan..." : "Masuk dengan Google"}
             </span>
 
           </button>
