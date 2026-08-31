@@ -25,7 +25,6 @@ dist-ssr
 
 # Environment variables - jangan publish ke GitHub
 .env
-.env.example
 
 # Environment and backend dependencies
 .env

@@ -1,22 +1,13 @@
-import postgres from "postgres";
+import { firestore } from "./firebase.js";
 
-const databaseUrl = process.env.DATABASE_URL?.trim();
-
-// Jangan membuat koneksi database yang tidak valid saat serverless function dimuat.
-const sql = databaseUrl
-  ? postgres(databaseUrl, {
-      prepare: false,
-      max: 1,
-      idle_timeout: 20,
-      connect_timeout: 10,
-    })
-  : null;
-
+// Firebase Firestore menjadi database utama aplikasi.
+// Nama koleksi: users, courses, lessons, blogs, orders, payments, payment_methods, categories.
 export async function checkDatabase() {
-  if (!sql) {
-    throw new Error("DATABASE_URL belum dikonfigurasi.");
-  }
-  await sql`SELECT 1`;
+  await firestore.collection("_health").doc("firestore").set(
+    { checkedAt: new Date().toISOString(), provider: "firebase-firestore" },
+    { merge: true }
+  );
 }
 
-export default sql;
+export { firestore };
+export default firestore;
