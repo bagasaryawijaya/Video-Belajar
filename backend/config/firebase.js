@@ -11,7 +11,9 @@ const __dirname = path.dirname(__filename);
 
 function parseServiceAccount(value, sourceName) {
   try {
-    return JSON.parse(value);
+    // Vercel kadang menyimpan newline private_key sebagai \n literal.
+    const normalized = String(value).trim().replace(/\\n/g, "\n");
+    return JSON.parse(normalized);
   } catch (error) {
     throw new Error(`Firebase service account dari ${sourceName} tidak valid JSON: ${error.message}`);
   }
@@ -29,9 +31,13 @@ function getServiceAccount() {
       }
     }
 
-    const decoded = Buffer.from(base64, "base64").toString("utf8");
-    if (decoded.trim().startsWith("{")) {
-      return parseServiceAccount(decoded, "FIREBASE_SERVICE_ACCOUNT_BASE64");
+    try {
+      const decoded = Buffer.from(base64, "base64").toString("utf8");
+      if (decoded.trim().startsWith("{")) {
+        return parseServiceAccount(decoded, "FIREBASE_SERVICE_ACCOUNT_BASE64");
+      }
+    } catch {
+      // Lanjutkan ke FIREBASE_SERVICE_ACCOUNT_JSON.
     }
   }
 

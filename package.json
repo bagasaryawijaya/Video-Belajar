@@ -28,5 +28,9 @@
     "nodemailer": "^7.0.13",
     "postgres": "^3.4.9",
     "sequelize": "^6.37.8"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=20.0.0"
   }
 }

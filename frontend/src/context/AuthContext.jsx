@@ -3,7 +3,13 @@ import axios from "axios";
 import { signInWithGooglePopup } from "../services/firebaseClient";
 
 const AuthContext = createContext();
-const API_ROOT = (import.meta.env.VITE_API_URL || "/api/courses").replace(/\/courses\/?$/, "");
+function getApiRoot() {
+  const value = String(import.meta.env.VITE_API_URL || "/api").trim().replace(/\/+$/, "");
+  if (!value || value === "/") return "/api";
+  return value.replace(/\/courses$/, "").replace(/\/auth$/, "");
+}
+
+const API_ROOT = getApiRoot();
 
 const authApi = axios.create({
   baseURL: `${API_ROOT}/auth`,
@@ -59,6 +65,9 @@ export function AuthProvider({ children }) {
     try {
       const response = await authApi.post("/login", { email, password });
       const result = response.data?.data;
+      if (!response.data?.success || !result?.token || !result?.user) {
+        throw new Error(response.data?.message || "Respons login dari server tidak valid.");
+      }
 
       localStorage.setItem("accessToken", result.token);
       localStorage.setItem("loginUser", JSON.stringify(result.user));
@@ -70,7 +79,7 @@ export function AuthProvider({ children }) {
     } catch (error) {
       return {
         success: false,
-        message: error.response?.data?.message || "Login gagal.",
+        message: error.response?.data?.message || error.message || "Login gagal.",
       };
     }
   };
@@ -81,6 +90,9 @@ export function AuthProvider({ children }) {
       const { idToken } = await signInWithGooglePopup();
       const response = await authApi.post("/google", { idToken });
       const result = response.data?.data;
+      if (!response.data?.success || !result?.token || !result?.user) {
+        throw new Error(response.data?.message || "Respons login Google dari server tidak valid.");
+      }
       localStorage.setItem("accessToken", result.token);
       localStorage.setItem("loginUser", JSON.stringify(result.user));
       setUser(result.user);

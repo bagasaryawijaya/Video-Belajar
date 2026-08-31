@@ -15,6 +15,7 @@ export default function SignUp() {
     nama: "",
     email: "",
     phone: "",
+    country: "+62",
     password: "",
     confirmPassword: "",
   });
@@ -123,6 +124,8 @@ export default function SignUp() {
 
               <select
                 name="country"
+                value={formData.country}
+                onChange={handleChange}
                 className="w-28 border rounded-md px-2 py-3"
               >
                 <option value="+62">
@@ -242,9 +245,10 @@ export default function SignUp() {
 
           <button
             type="submit"
+            disabled={loading}
             className="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg font-semibold"
           >
-            Daftar
+            {loading ? "Mendaftarkan..." : "Daftar"}
           </button>
 
 

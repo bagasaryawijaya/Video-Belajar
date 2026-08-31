@@ -1,7 +1,7 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
-import db from "./config/database.js";
+import { checkDatabase } from "./config/database.js";
 import "./config/firebase.js";
 import courseRoutes from "./routes/courseRoutes.js";
 import blogRoutes from "./routes/blogRoutes.js";
@@ -48,7 +48,7 @@ app.use(express.json({ limit: "8mb" }));
 
 app.get("/api/health", async (req, res, next) => {
   try {
-    await db.query("SELECT 1");
+    await checkDatabase();
 
     res.json({
       success: true,
