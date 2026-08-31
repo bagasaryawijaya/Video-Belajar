@@ -40,8 +40,8 @@ export const completePayment = async (req,res,next) => {
     const { paymentId, cardLast4 } = req.body;
     const [rows] = await db.query('SELECT payment_id,order_id FROM payments WHERE payment_id=? LIMIT 1',[paymentId]);
     if(!rows.length) return res.status(404).json({success:false,message:'Pembayaran tidak ditemukan'});
-    await db.query('UPDATE payments SET payment_status="success", paid_at=CURRENT_TIMESTAMP, transaction_id=COALESCE(transaction_id, ?) WHERE payment_id=?',[cardLast4 ? `CARD-${cardLast4}` : `PAID-${shortCode()}`,paymentId]);
-    await db.query('UPDATE orders SET status="completed" WHERE order_id=?',[rows[0].order_id]);
+    await db.query("UPDATE payments SET payment_status='success', paid_at=CURRENT_TIMESTAMP, transaction_id=COALESCE(transaction_id, ?) WHERE payment_id=?",[cardLast4 ? `CARD-${cardLast4}` : `PAID-${shortCode()}`,paymentId]);
+    await db.query("UPDATE orders SET status='completed' WHERE order_id=?",[rows[0].order_id]);
     res.json({success:true,data:{paymentId:Number(paymentId),status:'paid'}});
   }catch(e){next(e);}
 };

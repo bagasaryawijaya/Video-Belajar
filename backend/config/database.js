@@ -1,14 +1,7 @@
-import mysql from 'mysql2/promise';
-import dotenv from 'dotenv';
-dotenv.config();
-const pool = mysql.createPool({
-  host: process.env.DB_HOST || 'localhost',
-  port: Number(process.env.DB_PORT || 3306),
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'video_belajar',
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0
+import postgres from "postgres";
+
+const sql = postgres(process.env.DATABASE_URL, {
+  prepare: false,
 });
-export default pool;
+
+export default sql;
