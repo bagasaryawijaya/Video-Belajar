@@ -83,8 +83,14 @@ export async function signup(req, res, next) {
         token,
       });
     } catch (mailError) {
-      await users().doc(id).delete().catch(() => {});
-      throw new Error(`Akun belum dibuat karena email verifikasi gagal dikirim. ${mailError.message}`);
+      // Akun tetap disimpan agar pengguna tidak perlu mendaftar ulang.
+      // Pengguna dapat meminta ulang kode setelah konfigurasi SMTP diperbaiki.
+      return res.status(201).json({
+        success: true,
+        message: "Akun berhasil dibuat, tetapi kode verifikasi belum dapat dikirim. Silakan gunakan kirim ulang kode setelah SMTP dikonfigurasi.",
+        warning: true,
+        data: { id, email: normalizedEmail },
+      });
     }
 
     return res.status(201).json({

@@ -1,6 +1,6 @@
+import "dotenv/config";
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
 import db from "./config/database.js";
 import "./config/firebase.js";
 import courseRoutes from "./routes/courseRoutes.js";
@@ -9,22 +9,30 @@ import uploadRoutes from "./routes/uploadRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 
-dotenv.config();
-
 const app = express();
 
-const allowedOrigins = (
-  process.env.CORS_ORIGIN ||
-  "https://video-belajar-three.vercel.app"
-)
+const allowedOrigins = (process.env.CORS_ORIGIN || process.env.FRONTEND_URL || "http://localhost:5173")
   .split(",")
   .map((origin) => origin.trim())
   .filter(Boolean);
 
+function isAllowedOrigin(origin) {
+  if (!origin) return true;
+  if (allowedOrigins.includes(origin)) return true;
+
+  // Izinkan preview deployment Vercel untuk project ini.
+  try {
+    const hostname = new URL(origin).hostname;
+    return hostname.endsWith(".vercel.app");
+  } catch {
+    return false;
+  }
+}
+
 app.use(
   cors({
     origin(origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (isAllowedOrigin(origin)) {
         return callback(null, true);
       }
 
