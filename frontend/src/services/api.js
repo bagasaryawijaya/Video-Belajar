@@ -1,7 +1,7 @@
 import axios from "axios";
 
 // Default production: frontend dan Express serverless function berada pada domain Vercel yang sama.
-const API_URL = (import.meta.env.VITE_API_URL || "/api/courses").replace(/\/+$/, "");
+const API_URL = "/api/courses";
 
 const api = axios.create({
   baseURL: API_URL,

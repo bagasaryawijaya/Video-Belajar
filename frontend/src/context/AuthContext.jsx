@@ -4,9 +4,8 @@ import { signInWithGooglePopup } from "../services/firebaseClient";
 
 const AuthContext = createContext();
 function getApiRoot() {
-  const value = String(import.meta.env.VITE_API_URL || "/api").trim().replace(/\/+$/, "");
-  if (!value || value === "/") return "/api";
-  return value.replace(/\/courses$/, "").replace(/\/auth$/, "");
+  // Production Vercel: frontend dan Express API berada pada domain yang sama.
+  return "/api";
 }
 
 const API_ROOT = getApiRoot();

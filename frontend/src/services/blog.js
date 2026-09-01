@@ -2,7 +2,7 @@ import axios from "axios";
 import defaultBlogs from "../data/blogs";
 
 const KEY = "videoBelajarBlogs";
-const API_URL = import.meta.env.VITE_API_URL || "/api/courses";
+const API_URL = "/api/courses";
 const api = axios.create({ baseURL: API_URL.replace(/\/courses\/?$/, ""), timeout: 8000 });
 
 export const readBlogs = () => {

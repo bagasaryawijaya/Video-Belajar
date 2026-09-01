@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { FaEnvelope, FaEye, FaEyeSlash, FaKey } from "react-icons/fa";
 import axios from "axios";
 
-const API_ROOT = (import.meta.env.VITE_API_URL || "/api/courses").replace(/\/courses\/?$/, "");
+const API_ROOT = "/api";
 
 export default function ForgotPassword() {
   const navigate = useNavigate();
