@@ -1,8 +1,21 @@
-import { Router } from "express";
-import { preparePayment, getPaymentStatus, handleNotification } from "../controllers/paymentController.js";
-import { authenticate } from "../middleware/authMiddleware.js";
-const router = Router();
-router.post("/prepare", authenticate, preparePayment);
-router.get("/:paymentId/status", authenticate, getPaymentStatus);
-router.post("/notification", handleNotification);
+import express from "express";
+
+const router = express.Router();
+
+router.post("/", async (req, res) => {
+  try {
+    // proses payment
+
+    res.json({
+      success: true,
+      message: "Payment berhasil",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
 export default router;

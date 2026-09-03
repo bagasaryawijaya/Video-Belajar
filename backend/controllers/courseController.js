@@ -1,6 +1,5 @@
 import crypto from "crypto";
 import { firestore } from "../config/firebase.js";
-import { saveBase64Image } from "./uploadController.js";
 
 const courses = () => firestore.collection("courses");
 const lessons = () => firestore.collection("lessons");
@@ -120,7 +119,7 @@ export const createCourse = async (req, res, next) => {
     if (Number(discount_percent) < 0 || Number(discount_percent) > 100) return res.status(400).json({ success: false, message: "discount_percent harus 0-100" });
     if (discount_start_date && discount_end_date && String(discount_start_date) > String(discount_end_date)) return res.status(400).json({ success: false, message: "Tanggal mulai diskon tidak boleh setelah tanggal akhir" });
     const id = crypto.randomUUID(); const slug = await uniqueSlug(title); const inst = await ensureInstructor(instructor, instructorRole);
-    const image = thumbnailData ? await saveBase64Image(thumbnailData, req.body.thumbnailName, "courses") : thumbnail;
+    const image = thumbnailData || thumbnail || "";
     const data = { id, course_title: title.trim(), course_slug: slug, thumbnail_url: image, description, category_name: selectedCategory.name, category_slug: selectedCategory.slug, categoryId: selectedCategory.id, instructor_name: inst.name, instructor_role: inst.role, instructorId: inst.id, level: levelValue(level), duration_hours: Number(duration_hours) || 0, total_students: 0, average_rating: Number(rating) || 0, review_count: 0, price: Number(price) || 0, discount_percent: Number(discount_percent) || 0, discount_start_date, discount_end_date, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
     await courses().doc(id).set(data);
     res.status(201).json({ success: true, data: normalizeCourse(data, id) });
@@ -146,7 +145,7 @@ export const updateCourse = async (req, res, next) => {
     }
     if (body.instructor !== undefined) { const i = await ensureInstructor(body.instructor, body.instructorRole || "instructor"); patch.instructor_name = i.name; patch.instructor_role = i.role; patch.instructorId = i.id; }
     if (body.level !== undefined) patch.level = levelValue(body.level); if (body.duration_hours !== undefined) patch.duration_hours = Number(body.duration_hours) || 0; if (body.rating !== undefined) patch.average_rating = Number(body.rating) || 0; if (body.price !== undefined) patch.price = Number(body.price) || 0; patch.discount_percent = nextDiscount; patch.discount_start_date = nextStart; patch.discount_end_date = nextEnd;
-    if (body.thumbnailData) patch.thumbnail_url = await saveBase64Image(body.thumbnailData, body.thumbnailName, "courses"); else if (body.thumbnail !== undefined) patch.thumbnail_url = body.thumbnail;
+    if (body.thumbnailData) patch.thumbnail_url = body.thumbnailData; else if (body.thumbnail !== undefined) patch.thumbnail_url = body.thumbnail;
     await ref.update(patch); const updated = (await ref.get()).data(); res.json({ success: true, data: normalizeCourse(updated, ref.id) });
   } catch (error) { next(error); }
 };
