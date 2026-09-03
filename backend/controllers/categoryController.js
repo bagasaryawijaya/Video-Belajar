@@ -1,45 +1,215 @@
 import crypto from "crypto";
 import { firestore } from "../config/firebase.js";
 
-const categories = () => firestore.collection("categories");
-const slugify = (value) => String(value || "category").trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "category";
+/*
+|--------------------------------------------------------------------------
+| FIRESTORE COLLECTION
+|--------------------------------------------------------------------------
+*/
 
+const categoriesCollection = () =>
+  firestore.collection("categories");
 
+/*
+|--------------------------------------------------------------------------
+| SLUGIFY
+|--------------------------------------------------------------------------
+*/
+
+function slugify(value) {
+  return (
+    String(value || "category")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "") || "category"
+  );
+}
+
+/*
+|--------------------------------------------------------------------------
+| GET ALL CATEGORIES
+|--------------------------------------------------------------------------
+*/
 
 export async function getCategories(req, res, next) {
   try {
-    const snap = await categories().get();
-    const existing = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-    existing.sort((a, b) => String(a.name).localeCompare(String(b.name), "id"));
-    res.json({ success: true, data: existing });
-  } catch (error) { next(error); }
+    const snapshot = await categoriesCollection().get();
+
+    const categories = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    categories.sort((a, b) =>
+      String(a.name || "").localeCompare(
+        String(b.name || ""),
+        "id"
+      )
+    );
+
+    return res.status(200).json({
+      success: true,
+      data: categories,
+    });
+  } catch (error) {
+    next(error);
+  }
 }
+
+/*
+|--------------------------------------------------------------------------
+| CREATE CATEGORY
+|--------------------------------------------------------------------------
+*/
 
 export async function createCategory(req, res, next) {
   try {
     const name = String(req.body?.name || "").trim();
-    if (!name) return res.status(400).json({ success: false, message: "Nama bidang studi wajib diisi." });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Validation
+    |--------------------------------------------------------------------------
+    */
+
+    if (!name) {
+      return res.status(400).json({
+        success: false,
+        message: "Nama bidang studi wajib diisi.",
+      });
+    }
+
     const slug = slugify(name);
-    const duplicate = await categories().where("slug", "==", slug).limit(1).get();
-    if (!duplicate.empty) return res.status(409).json({ success: false, message: "Bidang studi sudah ada." });
-    const ref = categories().doc(crypto.randomUUID());
-    const data = { id: ref.id, name, slug, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
-    await ref.set(data);
-    res.status(201).json({ success: true, data });
-  } catch (error) { next(error); }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Check duplicate
+    |--------------------------------------------------------------------------
+    */
+
+    const duplicateSnapshot =
+      await categoriesCollection()
+        .where("slug", "==", slug)
+        .limit(1)
+        .get();
+
+    if (!duplicateSnapshot.empty) {
+      return res.status(409).json({
+        success: false,
+        message: "Bidang studi sudah ada.",
+      });
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Generate Firestore Document ID
+    |--------------------------------------------------------------------------
+    */
+
+    const categoryId = crypto.randomUUID();
+
+    const categoryRef =
+      categoriesCollection().doc(categoryId);
+
+    const now = new Date().toISOString();
+
+    const categoryData = {
+      id: categoryId,
+      name,
+      slug,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    /*
+    |--------------------------------------------------------------------------
+    | Save to Firestore
+    |--------------------------------------------------------------------------
+    */
+
+    await categoryRef.set(categoryData);
+
+    return res.status(201).json({
+      success: true,
+      message: "Bidang studi berhasil ditambahkan.",
+      data: categoryData,
+    });
+  } catch (error) {
+    next(error);
+  }
 }
+
+/*
+|--------------------------------------------------------------------------
+| DELETE CATEGORY
+|--------------------------------------------------------------------------
+*/
 
 export async function deleteCategory(req, res, next) {
   try {
-    const ref = categories().doc(req.params.id);
-    const doc = await ref.get();
-    if (!doc.exists) return res.status(404).json({ success: false, message: "Bidang studi tidak ditemukan." });
+    const categoryId = String(req.params.id || "").trim();
 
-    const name = doc.data()?.name;
-    const used = await firestore.collection("courses").where("categoryId", "==", ref.id).limit(1).get();
-    if (!used.empty) return res.status(409).json({ success: false, message: `Bidang studi "${name}" masih dipakai oleh course dan tidak dapat dihapus.` });
+    if (!categoryId) {
+      return res.status(400).json({
+        success: false,
+        message: "ID bidang studi tidak valid.",
+      });
+    }
 
-    await ref.delete();
-    res.json({ success: true, message: "Bidang studi berhasil dihapus." });
-  } catch (error) { next(error); }
+    const categoryRef =
+      categoriesCollection().doc(categoryId);
+
+    const categoryDocument =
+      await categoryRef.get();
+
+    /*
+    |--------------------------------------------------------------------------
+    | Check category
+    |--------------------------------------------------------------------------
+    */
+
+    if (!categoryDocument.exists) {
+      return res.status(404).json({
+        success: false,
+        message: "Bidang studi tidak ditemukan.",
+      });
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Check if category is used by courses
+    |--------------------------------------------------------------------------
+    */
+
+    const usedByCourse =
+      await firestore
+        .collection("courses")
+        .where("categoryId", "==", categoryId)
+        .limit(1)
+        .get();
+
+    if (!usedByCourse.empty) {
+      return res.status(409).json({
+        success: false,
+        message:
+          "Bidang studi masih digunakan oleh course dan tidak dapat dihapus.",
+      });
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Delete from Firestore
+    |--------------------------------------------------------------------------
+    */
+
+    await categoryRef.delete();
+
+    return res.status(200).json({
+      success: true,
+      message: "Bidang studi berhasil dihapus.",
+    });
+  } catch (error) {
+    next(error);
+  }
 }

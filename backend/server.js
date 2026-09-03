@@ -1,22 +1,31 @@
 import "dotenv/config";
+
 import express from "express";
 import cors from "cors";
 
 import { checkDatabase } from "./config/database.js";
 import "./config/firebase.js";
 
+/*
+|--------------------------------------------------------------------------
+| ROUTES
+|--------------------------------------------------------------------------
+*/
+
+import authRoutes from "./routes/authRoutes.js";
 import courseRoutes from "./routes/courseRoutes.js";
 import blogRoutes from "./routes/blogRoutes.js";
+import categoryRoutes from "./routes/categoryRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
-import authRoutes from "./routes/authRoutes.js";
-import categoryRoutes from "./routes/categoryRoutes.js";
 
 const app = express();
 
-/* =========================================================
-   CORS CONFIGURATION
-========================================================= */
+/*
+|--------------------------------------------------------------------------
+| CORS
+|--------------------------------------------------------------------------
+*/
 
 const allowedOrigins = (
   process.env.CORS_ORIGIN ||
@@ -27,21 +36,39 @@ const allowedOrigins = (
   .filter(Boolean);
 
 function isAllowedOrigin(origin) {
-  // Request dari server-to-server / Postman / curl
+  /*
+  |--------------------------------------------------------------------------
+  | Server-to-server / Postman / curl
+  |--------------------------------------------------------------------------
+  */
+
   if (!origin) {
     return true;
   }
 
-  // Origin yang terdaftar di environment variable
+  /*
+  |--------------------------------------------------------------------------
+  | Environment Origins
+  |--------------------------------------------------------------------------
+  */
+
   if (allowedOrigins.includes(origin)) {
     return true;
   }
 
-  // Izinkan Vercel preview deployment
+  /*
+  |--------------------------------------------------------------------------
+  | Vercel Deployments
+  |--------------------------------------------------------------------------
+  */
+
   try {
     const hostname = new URL(origin).hostname;
 
-    if (hostname.endsWith(".vercel.app")) {
+    if (
+      hostname === "localhost" ||
+      hostname.endsWith(".vercel.app")
+    ) {
       return true;
     }
   } catch {
@@ -55,20 +82,50 @@ app.use(
   cors({
     origin(origin, callback) {
       if (isAllowedOrigin(origin)) {
-        callback(null, true);
-      } else {
-        callback(
-          new Error(`Origin ${origin} tidak diizinkan oleh CORS`)
-        );
+        return callback(null, true);
       }
+
+      return callback(
+        new Error(
+          `Origin ${origin} tidak diizinkan oleh CORS`
+        )
+      );
     },
+
     credentials: true,
+
+    methods: [
+      "GET",
+      "POST",
+      "PUT",
+      "PATCH",
+      "DELETE",
+      "OPTIONS",
+    ],
+
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+    ],
   })
 );
 
-/* =========================================================
-   BODY PARSER
-========================================================= */
+/*
+|--------------------------------------------------------------------------
+| IMPORTANT: OPTIONS
+|--------------------------------------------------------------------------
+|
+| Membantu request POST/DELETE dari browser.
+|
+*/
+
+app.options("*", cors());
+
+/*
+|--------------------------------------------------------------------------
+| BODY PARSER
+|--------------------------------------------------------------------------
+*/
 
 app.use(
   express.json({
@@ -83,14 +140,17 @@ app.use(
   })
 );
 
-/* =========================================================
-   ROOT API
-========================================================= */
+/*
+|--------------------------------------------------------------------------
+| API ROOT
+|--------------------------------------------------------------------------
+*/
 
 app.get("/api", (req, res) => {
-  res.json({
+  return res.status(200).json({
     success: true,
-    message: "API Video Belajar aktif",
+    message: "API Video Belajar aktif.",
+
     endpoints: {
       health: "/api/health",
       auth: "/api/auth",
@@ -103,104 +163,90 @@ app.get("/api", (req, res) => {
   });
 });
 
-/* =========================================================
-   HEALTH CHECK
-========================================================= */
+/*
+|--------------------------------------------------------------------------
+| HEALTH CHECK
+|--------------------------------------------------------------------------
+*/
 
 app.get("/api/health", async (req, res, next) => {
   try {
     await checkDatabase();
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
-      message: "API dan Firebase Firestore/Storage terhubung.",
+      message:
+        "API dan Firebase Firestore berhasil terhubung.",
     });
   } catch (error) {
     next(error);
   }
 });
 
-/* =========================================================
-   API ROUTES
-========================================================= */
-
 /*
-  Semua endpoint POST / GET / PUT / DELETE
-  didefinisikan di masing-masing file router.
-
-  Contoh:
-
-  app.use("/api/courses", courseRoutes);
-
-  Jika courseRoutes.js memiliki:
-
-  router.post("/", createCourse);
-
-  Maka endpoint-nya menjadi:
-
-  POST /api/courses
+|--------------------------------------------------------------------------
+| API ROUTES
+|--------------------------------------------------------------------------
 */
 
 app.use("/api/auth", authRoutes);
+
 app.use("/api/courses", courseRoutes);
+
 app.use("/api/blogs", blogRoutes);
-app.use("/api/uploads", uploadRoutes);
-app.use("/api/payments", paymentRoutes);
+
 app.use("/api/categories", categoryRoutes);
 
-/* =========================================================
-   404 HANDLER
-========================================================= */
+app.use("/api/uploads", uploadRoutes);
+
+app.use("/api/payments", paymentRoutes);
+
+/*
+|--------------------------------------------------------------------------
+| 404 API
+|--------------------------------------------------------------------------
+*/
 
 app.use((req, res) => {
-  res.status(404).json({
+  return res.status(404).json({
     success: false,
-    message: "Endpoint tidak ditemukan",
+    message: "Endpoint tidak ditemukan.",
     method: req.method,
     path: req.originalUrl,
   });
 });
 
-/* =========================================================
-   GLOBAL ERROR HANDLER
-========================================================= */
+/*
+|--------------------------------------------------------------------------
+| GLOBAL ERROR HANDLER
+|--------------------------------------------------------------------------
+*/
 
-app.use((err, req, res, next) => {
-  console.error("API Error:", err);
+app.use((error, req, res, next) => {
+  console.error("API Error:", error);
 
-  const statusCode = err.status || err.statusCode || 500;
+  const statusCode =
+    error.status ||
+    error.statusCode ||
+    500;
 
-  res.status(statusCode).json({
+  return res.status(statusCode).json({
     success: false,
-    message: err.message || "Internal server error",
+    message:
+      error.message ||
+      "Terjadi kesalahan pada server.",
   });
 });
 
-/* =========================================================
-   EXPORT APP
-========================================================= */
-
 export default app;
 
-/* =========================================================
-   LOCAL SERVER
-========================================================= */
+/*
+|--------------------------------------------------------------------------
+| LOCAL DEVELOPMENT SERVER
+|--------------------------------------------------------------------------
+*/
 
 if (process.env.VERCEL !== "1") {
-  try {
-    const { ensureDefaultAdminAccounts } =
-      await import("./controllers/authController.js");
-
-    await ensureDefaultAdminAccounts().catch((error) => {
-      console.error("Admin seed:", error.message);
-    });
-  } catch (error) {
-    console.error(
-      "Gagal menjalankan admin seed:",
-      error.message
-    );
-  }
-
   const port = Number(process.env.PORT || 5000);
 
   app.listen(port, () => {
