@@ -7,7 +7,6 @@ import {
   updateCourse as updateCourseApi,
   deleteCourse as deleteCourseApi,
 } from "../services/api";
-import defaultCourses from "../data/courses";
 import { slugify } from "../utils/slug";
 import {
   setCourses,
@@ -34,13 +33,11 @@ export function CourseProvider({ children }) {
       setUsingFallback(false);
       return data;
     } catch (err) {
-      // UI tetap dapat digunakan saat MySQL/backend belum dijalankan.
-      let localCourses = defaultCourses;
-      try { const saved = JSON.parse(localStorage.getItem("videoBelajarCourses")); if (Array.isArray(saved) && saved.length) localCourses = saved; } catch { /* gunakan data default */ }
-      dispatch(setCourses(localCourses));
-      setUsingFallback(true);
+      // Course hanya berasal dari Firebase melalui API; jangan tampilkan data demo/localStorage.
+      dispatch(setCourses([]));
+      setUsingFallback(false);
       setError(err.message);
-      return localCourses || defaultCourses;
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -64,11 +61,8 @@ export function CourseProvider({ children }) {
       const newCourse = await addCourseApi(payload);
       dispatch(addCourseToStore(newCourse));
       return newCourse;
-    } catch {
-      const newCourse = { ...payload, lessons: payload.lessons || ["Introduction to Course", "Video Pembelajaran", "Quiz"] };
-      dispatch(addCourseToStore(newCourse));
-      localStorage.setItem("videoBelajarCourses", JSON.stringify([...courses, newCourse]));
-      return newCourse;
+    } catch (error) {
+      throw error;
     }
   };
 
@@ -78,18 +72,14 @@ export function CourseProvider({ children }) {
       const updatedCourse = await updateCourseApi(id, payload);
       dispatch(updateCourseInStore(updatedCourse));
       return updatedCourse;
-    } catch {
-      const updatedCourse = { ...courses.find((c) => String(c.id) === String(id)), ...payload, id };
-      dispatch(updateCourseInStore(updatedCourse));
-      localStorage.setItem("videoBelajarCourses", JSON.stringify(courses.map((c) => String(c.id) === String(id) ? updatedCourse : c)));
-      return updatedCourse;
+    } catch (error) {
+      throw error;
     }
   };
 
   const deleteCourse = async (id) => {
-    try { await deleteCourseApi(id); } catch { /* gunakan data default */ }
+    await deleteCourseApi(id);
     dispatch(deleteCourseFromStore(id));
-    localStorage.setItem("videoBelajarCourses", JSON.stringify(courses.filter((c) => String(c.id) !== String(id))));
   };
 
   return (

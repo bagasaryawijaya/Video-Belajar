@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_ROOT = "/api";
+const API_ROOT = (import.meta.env.VITE_API_URL || "/api/courses").replace(/\/courses\/?$/, "");
 
 export async function uploadImage(file, folder = "images") {
   if (!file) return null;

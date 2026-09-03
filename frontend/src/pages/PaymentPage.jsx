@@ -1,13 +1,28 @@
-import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { FiChevronDown, FiCopy } from "react-icons/fi";
+import { useCallback, useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { FiCheckCircle, FiClock, FiRefreshCw } from "react-icons/fi";
 import { useCourses } from "../context/CourseContext";
 import { useAuth } from "../context/AuthContext";
-import { expirePaymentIfNeeded, getPayment, getPaymentByCourse, upsertPayment } from "../services/payment";
+import { getPaymentByCourse, upsertPayment } from "../services/payment";
+import { getPaymentStatus } from "../services/paymentApi";
 import logo from "../assets/logo-video-belajar.png";
-import { completePayment } from "../services/paymentApi";
 
 const money = n => `Rp ${Number(n || 0).toLocaleString("id-ID")}`;
+
+function loadSnap() {
+  return new Promise((resolve, reject) => {
+    if (window.snap) return resolve(window.snap);
+    const clientKey = import.meta.env.VITE_MIDTRANS_CLIENT_KEY;
+    if (!clientKey) return reject(new Error("VITE_MIDTRANS_CLIENT_KEY belum diisi di Vercel."));
+    const script = document.createElement("script");
+    script.src = import.meta.env.VITE_MIDTRANS_IS_PRODUCTION === "true" ? "https://app.midtrans.com/snap/snap.js" : "https://app.sandbox.midtrans.com/snap/snap.js";
+    script.setAttribute("data-client-key", clientKey);
+    script.async = true;
+    script.onload = () => resolve(window.snap);
+    script.onerror = () => reject(new Error("Gagal memuat halaman pembayaran Midtrans."));
+    document.head.appendChild(script);
+  });
+}
 
 export default function PaymentPage() {
   const { id } = useParams();
@@ -15,132 +30,60 @@ export default function PaymentPage() {
   const { courses, getCourseById } = useCourses();
   const { user, isLogin } = useAuth();
   const [course, setCourse] = useState(() => courses.find(c => String(c.id) === String(id)) || null);
-  const [payment, setPayment] = useState(() => expirePaymentIfNeeded(getPaymentByCourse(id, user?.email)));
-  const [remaining, setRemaining] = useState(() => Math.max(0, (getPaymentByCourse(id, user?.email)?.expiresAt || Date.now()) - Date.now()));
-  const [card,setCard]=useState({name:"",number:"",expiry:"",cvv:""});
-  const [paying,setPaying]=useState(false);
-  const [cardError,setCardError]=useState("");
+  const [payment] = useState(() => getPaymentByCourse(id, user?.email));
+  const [status, setStatus] = useState("pending");
+  const [opening, setOpening] = useState(false);
+  const [message, setMessage] = useState("");
 
   useEffect(() => { getCourseById(id).then(data => data && setCourse(data)); }, [id, getCourseById]);
+  useEffect(() => {
+    if (!isLogin) { navigate("/login", { replace: true }); return; }
+    const local = getPaymentByCourse(id, user?.email);
+    if (!local?.id) { navigate(`/checkout/${id}/method`, { replace: true }); return; }
+    getPaymentStatus(local.id).then((data) => setStatus(data?.status || "pending")).catch(() => {});
+  }, [id, isLogin, navigate, user?.email]);
+
+  const checkStatus = useCallback(async (goOnSuccess = true) => {
+    if (!payment?.id) return "pending";
+    try {
+      const data = await getPaymentStatus(payment.id);
+      setStatus(data.status);
+      if (data.status === "paid") {
+        upsertPayment({ ...payment, status: "paid", paidAt: Date.now(), transactionId: data.transactionId });
+        if (goOnSuccess) navigate(`/checkout/${id}/success`, { replace: true });
+      } else if (data.status === "failed") {
+        upsertPayment({ ...payment, status: "failed" });
+      }
+      return data.status;
+    } catch { return "pending"; }
+  }, [id, navigate, payment]);
 
   useEffect(() => {
-    if (!isLogin || !user?.email) {
-      navigate("/login", { replace: true });
-      return undefined;
-    }
-    const tick = () => {
-      const current = expirePaymentIfNeeded(getPaymentByCourse(id, user.email));
-      if (!current) return navigate(`/checkout/${id}/method`, { replace: true });
-      setPayment(current);
-      const left = Math.max(0, current.expiresAt - Date.now());
-      setRemaining(left);
-      if (current.status === "failed") navigate(`/checkout/${id}/failed`, { replace: true });
-    };
-    tick();
-    const timer = setInterval(tick, 1000);
+    if (!payment?.id || status !== "pending") return undefined;
+    const timer = setInterval(() => checkStatus(true), 5000);
     return () => clearInterval(timer);
-  }, [id, navigate, isLogin, user?.email]);
+  }, [payment?.id, status, checkStatus]);
 
-  if (!course || !payment) return <div className="min-h-screen bg-[#fffdf4] pt-28 text-center">Memuat pembayaran...</div>;
-
-  const total = payment.price + payment.adminFee;
-  const hours = Math.floor(remaining / 3600000);
-  const minutes = Math.floor((remaining % 3600000) / 60000);
-  const seconds = Math.floor((remaining % 60000) / 1000);
-  const pad = n => String(n).padStart(2, "0");
-
-  const payNow = async () => {
-    const current = expirePaymentIfNeeded(getPayment(payment.id));
-    if (!current || current.status === "failed") return navigate(`/checkout/${id}/failed`);
-    if (current.methodCode === "card") {
-      const digits=card.number.replace(/\D/g,"");
-      if(!card.name || digits.length < 13 || !/^\d{2}\/\d{2}$/.test(card.expiry) || card.cvv.length < 3){ setCardError("Lengkapi nama, nomor kartu, masa berlaku (MM/YY), dan CVV."); return; }
-    }
-    setPaying(true); setCardError("");
+  const openPayment = async () => {
+    if (!payment?.snapToken) return setMessage("Token pembayaran tidak ditemukan. Silakan pilih metode pembayaran lagi.");
+    setOpening(true); setMessage("");
     try {
-      await completePayment({ paymentId:current.gatewayPaymentId, cardLast4: current.methodCode === "card" ? card.number.replace(/\D/g,"").slice(-4) : undefined });
-      upsertPayment({ ...current, status: "paid", paidAt: Date.now() });
-      navigate(`/checkout/${id}/success`);
-    } catch {
-      setCardError("Pembayaran gagal diproses. Pastikan backend dan database aktif.");
-    } finally { setPaying(false); }
+      const snap = await loadSnap();
+      snap.pay(payment.snapToken, {
+        language: "id",
+        onSuccess: async () => { setMessage("Pembayaran berhasil. Menunggu konfirmasi server..."); await checkStatus(true); },
+        onPending: () => { setStatus("pending"); setMessage("Pembayaran menunggu penyelesaian. Untuk transfer/QRIS, selesaikan pembayaran pada instruksi Midtrans."); },
+        onError: () => { setStatus("failed"); setMessage("Pembayaran gagal. Silakan coba lagi."); },
+        onClose: () => { setMessage("Halaman pembayaran ditutup. Anda masih dapat melanjutkan pembayaran."); },
+      });
+    } catch (error) { setMessage(error.message); }
+    finally { setOpening(false); }
   };
 
-  return (
-    <div className="min-h-screen bg-[#fffdf4] pt-20 sm:pt-[88px]">
-      <CheckoutHeader step={2} />
-      <div className="bg-orange-50 py-3 text-center text-xs text-gray-600 sm:text-sm">
-        Selesaikan pemesanan dalam <b className="ml-2 rounded bg-orange-500 px-2 py-1 text-white">{pad(hours)}</b> : <b className="rounded bg-orange-500 px-2 py-1 text-white">{pad(minutes)}</b> : <b className="rounded bg-orange-500 px-2 py-1 text-white">{pad(seconds)}</b>
-      </div>
+  if (!course || !payment) return <div className="min-h-screen bg-[#fffdf4] pt-28 text-center">Memuat pembayaran...</div>;
+  const total = Number(payment.amount || payment.price || 0);
 
-      <main className="mx-auto grid max-w-6xl gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[minmax(0,1fr)_310px] lg:py-12">
-        <section>
-          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
-            <h1 className="text-xl font-bold">Metode Pembayaran</h1>
-            <PaymentInstructions payment={payment} card={card} setCard={setCard} cardError={cardError} />
-
-            <h2 className="mt-8 text-xl font-bold">Ringkasan Pesanan</h2>
-            <div className="mt-5 space-y-5 text-sm">
-              <div className="flex justify-between gap-4 text-gray-500"><span>Video Learning: {course.title}</span><b className="shrink-0 text-gray-600">{money(payment.price)}</b></div>
-              <div className="flex justify-between text-gray-500"><span>Biaya Admin</span><b className="text-gray-600">{money(payment.adminFee)}</b></div>
-              <div className="flex justify-between border-t pt-4 text-base font-bold"><span>Total Pembayaran</span><span className="text-green-500">{money(total)}</span></div>
-            </div>
-
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              <button onClick={() => navigate(`/checkout/${id}/method`)} className="rounded-lg border border-green-500 px-4 py-3 font-bold text-green-500 hover:bg-green-50">Ganti Metode Pembayaran</button>
-              <button disabled={paying} onClick={payNow} className="rounded-lg bg-green-500 px-4 py-3 font-bold text-white hover:bg-green-600 disabled:opacity-60">{paying ? "Memproses..." : "Bayar Sekarang"}</button>
-            </div>
-          </div>
-
-          <Instructions />
-        </section>
-
-        <CourseCard course={course} />
-      </main>
-    </div>
-  );
+  return <div className="min-h-screen bg-[#fffdf4] pt-20 sm:pt-[88px]"><CheckoutHeader step={2}/><main className="mx-auto grid max-w-6xl gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[minmax(0,1fr)_310px] lg:py-12"><section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-8"><div className="flex items-start justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-wider text-green-600">Pesanan {payment.orderNumber}</p><h1 className="mt-2 text-2xl font-bold">Selesaikan Pembayaran</h1><p className="mt-2 text-sm leading-6 text-gray-500">Pembayaran diproses secara aman oleh Midtrans. Transfer bank, QRIS/e-wallet, dan kartu diproses oleh gateway.</p></div><span className={`rounded-full px-3 py-1 text-xs font-bold ${status==="paid"?"bg-green-50 text-green-600":status==="failed"?"bg-red-50 text-red-600":"bg-orange-50 text-orange-600"}`}>{status==="paid"?"Lunas":status==="failed"?"Gagal":"Menunggu"}</span></div><div className="mt-7 rounded-2xl border border-green-100 bg-green-50 p-5"><div className="flex items-center gap-3"><FiClock className="text-xl text-green-600"/><div><p className="text-sm font-semibold">Total pembayaran</p><p className="text-2xl font-extrabold text-green-600">{money(total)}</p></div></div></div>{message&&<div className="mt-5 rounded-xl border border-orange-200 bg-orange-50 p-4 text-sm text-orange-700">{message}</div>}<button disabled={opening||status==="paid"} onClick={openPayment} className="mt-6 w-full rounded-xl bg-green-500 py-4 font-bold text-white hover:bg-green-600 disabled:opacity-60">{opening?"Membuka pembayaran...":status==="paid"?"Pembayaran sudah lunas":"Buka Pembayaran Midtrans"}</button><button onClick={()=>checkStatus(false)} className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 py-3 text-sm font-semibold text-gray-600 hover:bg-gray-50"><FiRefreshCw/> Perbarui Status Pembayaran</button><div className="mt-7 grid gap-3 sm:grid-cols-3"><Info title="Transfer Bank" text="Virtual Account bank yang tersedia di Midtrans"/><Info title="E-Wallet / QRIS" text="Bayar melalui QRIS atau e-wallet yang aktif"/><Info title="Kartu" text="Kartu kredit/debit melalui halaman aman Midtrans"/></div><div className="mt-7 rounded-xl border border-gray-200 p-4 text-sm text-gray-500"><b className="text-gray-800">Penting:</b> Jangan kirim nomor kartu, CVV, OTP, atau PIN kepada admin. Data kartu dimasukkan langsung di halaman pembayaran Midtrans.</div></section><aside className="h-fit rounded-xl border border-gray-200 bg-white p-4 shadow-sm lg:sticky lg:top-28"><img src={course.thumbnail} alt="" className="h-40 w-full rounded-xl object-cover"/><h2 className="mt-4 font-bold">{course.title}</h2><p className="mt-3 text-sm text-gray-500">Metode: <b className="text-gray-800">{payment.method}</b></p><div className="mt-5 border-t pt-4 text-sm"><div className="flex justify-between"><span className="text-gray-500">Course</span><b>{money(payment.price)}</b></div><div className="mt-2 flex justify-between"><span className="text-gray-500">Biaya Admin</span><b>{money(payment.adminFee)}</b></div><div className="mt-3 flex justify-between border-t pt-3 font-bold"><span>Total</span><span className="text-green-500">{money(total)}</span></div></div><Link to={`/checkout/${id}/method`} className="mt-5 block text-center text-sm font-semibold text-green-600 hover:underline">Ganti metode pembayaran</Link></aside></main></div>;
 }
-
-function PaymentInstructions({ payment, card, setCard, cardError }) {
-  const d=payment.details || {};
-  if(d.type === "bank") return <div className="mt-5 rounded-xl border border-gray-200 p-5 sm:p-8">
-    <div className="text-2xl font-extrabold text-blue-600">{d.bank}</div><p className="mt-2 text-base font-medium">Bayar melalui Virtual Account {d.bank}</p>
-    <div className="mt-5 rounded-xl bg-gray-50 p-4"><p className="text-xs text-gray-500">Nomor Virtual Account</p><div className="mt-1 flex flex-wrap items-center gap-2 text-lg font-extrabold tracking-wider"><span>{d.va}</span><button className="text-sm font-bold text-orange-500" onClick={()=>navigator.clipboard?.writeText(d.va)}><FiCopy className="inline"/> Salin</button></div></div>
-    <ol className="mt-5 list-decimal space-y-2 pl-5 text-sm leading-6 text-gray-500"><li>Pilih transfer ke Virtual Account pada ATM/mobile banking.</li><li>Masukkan nomor VA sesuai bank yang dipilih.</li><li>Pastikan nominal sama dengan total pembayaran.</li><li>Konfirmasi transaksi dan tunggu status pembayaran.</li></ol>
-  </div>;
-  if(d.type === "wallet") return <div className="mt-5 rounded-xl border border-gray-200 p-5 text-center sm:p-8"><div className="mx-auto flex h-44 w-44 items-center justify-center rounded-xl border-8 border-gray-900 bg-white text-center font-black tracking-widest">QRIS<br/><span className="text-[10px]">{d.qrReference}</span></div><p className="mt-4 font-bold">Bayar dengan {d.wallet}</p><p className="mt-2 text-sm text-gray-500">Buka aplikasi {d.wallet}, pilih pembayaran QR/merchant, lalu scan QR di atas.</p><p className="mt-3 text-xs text-gray-400">Kode merchant: {d.merchantCode}</p></div>;
-  return <div className="mt-5 rounded-xl border border-gray-200 p-5 sm:p-8"><div className="grid gap-4 sm:grid-cols-2"><label className="text-sm font-semibold sm:col-span-2">Nama pada Kartu<input value={card.name} onChange={e=>setCard({...card,name:e.target.value})} className="mt-2 w-full rounded-xl border p-3 font-normal" placeholder="Nama lengkap"/></label><label className="text-sm font-semibold sm:col-span-2">Nomor Kartu<input inputMode="numeric" value={card.number} onChange={e=>setCard({...card,number:e.target.value.replace(/[^0-9 ]/g,"")})} className="mt-2 w-full rounded-xl border p-3 font-normal tracking-wider" placeholder="1234 5678 9012 3456" maxLength="19"/></label><label className="text-sm font-semibold">Masa Berlaku<input inputMode="numeric" value={card.expiry} onChange={e=>setCard({...card,expiry:e.target.value.replace(/[^0-9/]/g,"").slice(0,5)})} className="mt-2 w-full rounded-xl border p-3 font-normal" placeholder="MM/YY" maxLength="5"/></label><label className="text-sm font-semibold">CVV<input type="password" inputMode="numeric" value={card.cvv} onChange={e=>setCard({...card,cvv:e.target.value.replace(/\D/g,"").slice(0,4)})} className="mt-2 w-full rounded-xl border p-3 font-normal" placeholder="•••" maxLength="4"/></label></div>{cardError&&<p className="mt-3 text-sm font-semibold text-red-500">{cardError}</p>}<p className="mt-4 text-xs leading-5 text-gray-400">Simulasi checkout: nomor kartu dan CVV tidak disimpan ke database. Hanya 4 digit terakhir yang dikirim sebagai referensi transaksi.</p></div>;
-}
-
-function CourseCard({ course }) {
-  return <aside className="h-fit rounded-xl border border-gray-200 bg-white p-4 shadow-sm lg:sticky lg:top-28">
-    <img src={course.thumbnail} alt="" className="h-40 w-full rounded-xl object-cover"/>
-    <h2 className="mt-4 text-lg font-bold">{course.title}</h2>
-    <p className="mt-4 font-bold text-green-500">{money(course.price)} <span className="ml-2 text-sm font-normal text-gray-400 line-through">Rp 500K</span></p>
-    <span className="mt-2 inline-block rounded bg-orange-400 px-2 py-1 text-[10px] font-bold text-white">Diskon 50%</span>
-    <h3 className="mt-5 text-sm font-bold">Kelas Ini Sudah Termasuk</h3>
-    <div className="mt-3 grid grid-cols-2 gap-3 text-xs text-gray-500"><span>✓ Ujian Akhir</span><span>✓ 49 Video</span><span>✓ 7 Dokumen</span><span>✓ Sertifikat</span><span>✓ Pretest</span></div>
-    <h3 className="mt-5 text-sm font-bold">Bahasa Pengantar</h3><p className="mt-2 text-xs text-gray-500">◉ Bahasa Indonesia</p>
-  </aside>;
-}
-
-function Instructions() {
-  const [open, setOpen] = useState(0);
-  const data = [
-    ["ATM BCA", ["Masukkan kartu ATM dan PIN BCA Anda.", "Di menu utama, pilih Transaksi Lainnya lalu pilih Transfer.", "Pilih Ke BCA Virtual Account.", "Masukkan nomor Virtual Account dan nominal pembayaran.", "Periksa detail transaksi lalu pilih Benar.", "Transaksi Anda sudah selesai."]],
-    ["Mobile Banking BCA", ["Buka Aplikasi BCA Mobile.", "Pilih m-BCA kemudian pilih m-Transfer.", "Pilih BCA Virtual Account.", "Masukkan nomor Virtual Account lalu pilih OK.", "Klik Send untuk melanjutkan transfer.", "Masukkan PIN dan tunggu transaksi selesai."]],
-    ["Internet Banking BCA", ["Login ke KlikBCA Individual.", "Pilih Transfer lalu Transfer ke BCA Virtual Account.", "Masukkan nomor Virtual Account.", "Pilih Lanjutkan untuk melanjutkan pembayaran.", "Masukkan respon KeyBCA sesuai instruksi.", "Pembayaran telah selesai."]],
-  ];
-  return <section className="mt-6 rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
-    <h2 className="text-xl font-bold">Tata Cara Pembayaran</h2>
-    <div className="mt-5 space-y-2">{data.map(([title, lines], i) => <div key={title} className="rounded-xl border border-gray-200">
-      <button onClick={() => setOpen(open === i ? -1 : i)} className="flex w-full justify-between px-4 py-4 text-left text-sm font-bold">{title}<FiChevronDown className={open === i ? "rotate-180" : ""}/></button>
-      {open === i && <ol className="list-decimal space-y-1 px-9 pb-4 text-sm leading-5 text-gray-500">{lines.map(x => <li key={x}>{x}</li>)}</ol>}
-    </div>)}</div>
-  </section>;
-}
-
-function CheckoutHeader({ step }) {
-  const steps = ["Pilih Metode", "Bayar", "Selesai"];
-  return <div className="border-b border-gray-200 bg-white"><div className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-4 py-3 sm:gap-4 sm:px-6 sm:py-4"><img src={logo} alt="Video Belajar" className="h-8 w-auto sm:h-10" />{steps.map((item, i) => <div key={item} className="flex items-center gap-2 text-xs font-semibold sm:text-sm"><span className={`flex h-7 w-7 items-center justify-center rounded-full border-2 ${i + 1 <= step ? "border-green-500 bg-green-500 text-white" : "border-gray-300 text-gray-400"}`}>{i + 1 < step ? "✓" : i + 1}</span><span className={i + 1 <= step ? "text-gray-800" : "text-gray-400"}>{item}</span>{i < 2 && <span className="hidden h-0.5 w-8 bg-gray-300 sm:block" />}</div>)}</div></div>;
-}
+function Info({title,text}){return <div className="rounded-xl border border-gray-200 p-4"><p className="font-bold text-gray-800">{title}</p><p className="mt-1 text-xs leading-5 text-gray-500">{text}</p></div>}
+function CheckoutHeader({step}){return <div className="border-b border-gray-200 bg-white"><div className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-4 py-4 sm:px-6"><img src={logo} alt="Video Belajar" className="h-8 w-auto sm:h-10"/><div className="flex items-center gap-2 text-xs font-semibold sm:gap-4 sm:text-sm">{["Pilih Metode","Bayar","Selesai"].map((item,i)=><div key={item} className="flex items-center gap-2"><span className={`flex h-7 w-7 items-center justify-center rounded-full border-2 ${i+1<=step?"border-green-500 bg-green-500 text-white":"border-gray-300 text-gray-400"}`}>{i+1<step?<FiCheckCircle/>:i+1}</span><span className={i+1<=step?"text-gray-800":"text-gray-400"}>{item}</span></div>)}</div></div></div>}

@@ -1,10 +1,10 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { FiChevronDown, FiClock, FiSearch, FiStar, FiSliders } from "react-icons/fi";
+import { FiChevronDown, FiSearch, FiSliders } from "react-icons/fi";
 import { useCourses } from "../context/CourseContext";
 import { courseSlug } from "../utils/slug";
+import { getCategories } from "../services/category";
 
-const staticCategories = ["Pemasaran", "Digital & Teknologi", "Pengembangan Diri", "Bisnis Manajemen", "UI/UX Design", "Web Development"];
 const durations = ["Kurang dari 4 Jam", "4 – 8 Jam", "Lebih dari 8 Jam"];
 
 const formatRupiah = (price) => `Rp ${Number(price || 0).toLocaleString("id-ID")}`;
@@ -54,13 +54,18 @@ function FilterSection({ title, children }) {
 }
 
 export default function Coursepage() {
-  const { courses, loading, error, usingFallback } = useCourses();
+  const { courses, loading, error } = useCourses();
   const [searchParams] = useSearchParams();
   const [category, setCategory] = useState(() => searchParams.get("category") || "Semua Kelas");
   const [duration, setDuration] = useState([]);
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("Terbaru");
   const [showAllCategories, setShowAllCategories] = useState(false);
+  const [remoteCategories, setRemoteCategories] = useState([]);
+
+  useEffect(() => {
+    getCategories().then((items) => setRemoteCategories(items.map((item) => item.name).filter(Boolean))).catch(() => {});
+  }, []);
   const [mobileFilter, setMobileFilter] = useState(false);
 
   const filteredCourses = useMemo(() => {
@@ -90,9 +95,9 @@ export default function Coursepage() {
   const toggleDuration = (value) => setDuration((current) => current.includes(value) ? current.filter((item) => item !== value) : [...current, value]);
   const reset = () => { setCategory("Semua Kelas"); setDuration([]); setSearch(""); setSort("Terbaru"); };
 
-  const allCategories = Array.from(new Set([...staticCategories, ...courses.map((course) => course.category).filter(Boolean)]));
-  const categories = ["Semua Kelas", ...allCategories];
-  const visibleCategories = showAllCategories ? allCategories : allCategories.slice(0, 6);
+  // Filter bidang studi hanya berasal dari koleksi categories Firebase yang dibuat admin.
+  const allCategories = Array.from(new Set(remoteCategories.filter(Boolean)));
+  const visibleCategories = showAllCategories ? allCategories : allCategories.slice(0, 5);
 
   return (
     <main className="min-h-screen bg-black pt-24 pb-16 text-gray-900 sm:pt-28">
@@ -102,9 +107,9 @@ export default function Coursepage() {
           <p className="mt-2 text-sm text-gray-400 sm:text-base">Jelajahi Dunia Pengetahuan Melalui Pilihan Kami!</p>
         </header>
 
-        {usingFallback && error && (
-          <div className="mb-5 rounded-xl border border-yellow-500/30 bg-yellow-500/10 px-4 py-3 text-xs text-yellow-200 sm:text-sm">
-            Backend belum aktif, jadi halaman menampilkan data demo. Setelah backend + MySQL aktif, data akan diambil dari API.
+        {error && (
+          <div className="mb-5 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-xs text-red-200 sm:text-sm">
+            {error}
           </div>
         )}
 
@@ -127,7 +132,7 @@ export default function Coursepage() {
                     {item}
                   </label>
                 ))}
-                <button onClick={() => setShowAllCategories((v) => !v)} className="text-xs font-medium text-green-600">{showAllCategories ? "Tampilkan lebih sedikit" : "Tampilkan semua"}</button>
+                {allCategories.length > 5 && <button onClick={() => setShowAllCategories((v) => !v)} className="text-xs font-medium text-green-600">{showAllCategories ? "Tampilkan lebih sedikit" : "Tampilkan semua"}</button>}
               </div>
             </FilterSection>
             <FilterSection title="Durasi">

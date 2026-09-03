@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
 
-const API_ROOT = "/api";
+const API_ROOT = (import.meta.env.VITE_API_URL || "/api/courses").replace(/\/courses\/?$/, "");
 
 export default function VerifyEmail() {
   const [searchParams] = useSearchParams();

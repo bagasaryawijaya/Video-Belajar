@@ -8,6 +8,7 @@ import blogRoutes from "./routes/blogRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
+import categoryRoutes from "./routes/categoryRoutes.js";
 
 const app = express();
 
@@ -52,7 +53,7 @@ app.get("/api/health", async (req, res, next) => {
 
     res.json({
       success: true,
-      message: "API dan MySQL terhubung. Firebase Admin aktif.",
+      message: "API dan Firebase Firestore/Storage terhubung.",
     });
   } catch (error) {
     next(error);
@@ -64,6 +65,7 @@ app.use("/api/courses", courseRoutes);
 app.use("/api/blogs", blogRoutes);
 app.use("/api/uploads", uploadRoutes);
 app.use("/api/payments", paymentRoutes);
+app.use("/api/categories", categoryRoutes);
 
 app.use((req, res) =>
   res.status(404).json({

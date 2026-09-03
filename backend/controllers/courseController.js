@@ -28,16 +28,6 @@ async function uniqueSlug(title, currentId = null) {
   }
 }
 
-async function ensureCategory(name) {
-  const categoryName = String(name || "Uncategorized").trim() || "Uncategorized";
-  const slug = slugify(categoryName);
-  const snap = await categories().where("slug", "==", slug).limit(1).get();
-  if (!snap.empty) return snap.docs[0].id;
-  const id = crypto.randomUUID();
-  await categories().doc(id).set({ id, name: categoryName, slug, description: "Kategori VideoBelajar", createdAt: new Date().toISOString() });
-  return id;
-}
-
 async function ensureInstructor(name, role = "instructor") {
   const instructorName = String(name || "Administrator").trim() || "Administrator";
   const snap = await users().where("nama", "==", instructorName).limit(1).get();
@@ -55,7 +45,7 @@ function normalizeCourse(data, id) {
   const active = pct > 0 && (!start || now >= start) && (!end || now <= end);
   const price = Number(data.price || 0);
   return {
-    id: String(id), title: data.course_title || data.title || "", description: data.description || "", thumbnail: publicImage(data.thumbnail_url || data.thumbnail),
+    id: String(id), categoryId: data.categoryId || "", title: data.course_title || data.title || "", description: data.description || "", thumbnail: publicImage(data.thumbnail_url || data.thumbnail),
     instructor: data.instructor_name || data.instructor || "", instructorRole: data.instructor_role || data.instructorRole || "",
     rating: Number(data.average_rating ?? data.rating ?? 0), discount_percent: pct, discount_start_date: data.discount_start_date || "", discount_end_date: data.discount_end_date || "",
     reviews: Number(data.review_count || 0), price, category: data.category_name || data.category || "", level: String(data.level || "beginner").charAt(0).toUpperCase() + String(data.level || "beginner").slice(1),
@@ -108,17 +98,30 @@ export const getCourseById = async (req, res, next) => {
   } catch (error) { next(error); }
 };
 
+async function getAdminCategory(categoryId, categoryName = "") {
+  if (!categoryId) throw Object.assign(new Error("categoryId bidang studi wajib diisi dan harus berasal dari Firebase."), { status: 400 });
+  const ref = categories().doc(String(categoryId));
+  const doc = await ref.get();
+  if (!doc.exists) throw Object.assign(new Error("Bidang studi tidak ditemukan di Firebase."), { status: 400 });
+  const data = doc.data() || {};
+  if (categoryName && String(data.name).trim() !== String(categoryName).trim()) {
+    throw Object.assign(new Error("Bidang studi tidak valid."), { status: 400 });
+  }
+  return { id: ref.id, name: String(data.name || "").trim(), slug: String(data.slug || slugify(data.name)) };
+}
+
 export const createCourse = async (req, res, next) => {
   try {
-    const { title, description = "", thumbnail, thumbnailData, instructor = "", instructorRole = "instructor", rating = 0, price = 0, category, level = "Beginner", duration_hours = 0, discount_percent = 0, discount_start_date = null, discount_end_date = null } = req.body;
+    const { title, description = "", thumbnail, thumbnailData, instructor = "", instructorRole = "instructor", rating = 0, price = 0, category, categoryId, level = "Beginner", duration_hours = 0, discount_percent = 0, discount_start_date = null, discount_end_date = null } = req.body;
     if (!title?.trim()) return res.status(400).json({ success: false, message: "title wajib diisi" });
     if (!thumbnail && !thumbnailData) return res.status(400).json({ success: false, message: "Gambar thumbnail wajib dipilih" });
-    if (!category) return res.status(400).json({ success: false, message: "category wajib diisi" });
+    if (!categoryId) return res.status(400).json({ success: false, message: "Pilih bidang studi yang sudah ditambahkan admin." });
+    const selectedCategory = await getAdminCategory(categoryId, category);
     if (Number(discount_percent) < 0 || Number(discount_percent) > 100) return res.status(400).json({ success: false, message: "discount_percent harus 0-100" });
     if (discount_start_date && discount_end_date && String(discount_start_date) > String(discount_end_date)) return res.status(400).json({ success: false, message: "Tanggal mulai diskon tidak boleh setelah tanggal akhir" });
-    const id = crypto.randomUUID(); const slug = await uniqueSlug(title); const categoryId = await ensureCategory(category); const inst = await ensureInstructor(instructor, instructorRole);
+    const id = crypto.randomUUID(); const slug = await uniqueSlug(title); const inst = await ensureInstructor(instructor, instructorRole);
     const image = thumbnailData ? await saveBase64Image(thumbnailData, req.body.thumbnailName, "courses") : thumbnail;
-    const data = { id, course_title: title.trim(), course_slug: slug, thumbnail_url: image, description, category_name: String(category).trim(), category_slug: slugify(category), categoryId, instructor_name: inst.name, instructor_role: inst.role, instructorId: inst.id, level: levelValue(level), duration_hours: Number(duration_hours) || 0, total_students: 0, average_rating: Number(rating) || 0, review_count: 0, price: Number(price) || 0, discount_percent: Number(discount_percent) || 0, discount_start_date, discount_end_date, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+    const data = { id, course_title: title.trim(), course_slug: slug, thumbnail_url: image, description, category_name: selectedCategory.name, category_slug: selectedCategory.slug, categoryId: selectedCategory.id, instructor_name: inst.name, instructor_role: inst.role, instructorId: inst.id, level: levelValue(level), duration_hours: Number(duration_hours) || 0, total_students: 0, average_rating: Number(rating) || 0, review_count: 0, price: Number(price) || 0, discount_percent: Number(discount_percent) || 0, discount_start_date, discount_end_date, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
     await courses().doc(id).set(data);
     res.status(201).json({ success: true, data: normalizeCourse(data, id) });
   } catch (error) { next(error); }
@@ -135,7 +138,12 @@ export const updateCourse = async (req, res, next) => {
     const patch = { updatedAt: new Date().toISOString() };
     if (body.title !== undefined) { patch.course_title = body.title; if (body.title !== current.course_title) patch.course_slug = await uniqueSlug(body.title, req.params.id); }
     if (body.description !== undefined) patch.description = body.description;
-    if (body.category !== undefined) { patch.category_name = body.category; patch.category_slug = slugify(body.category); patch.categoryId = await ensureCategory(body.category); }
+    if (body.categoryId !== undefined || body.category !== undefined) {
+      const selectedCategory = await getAdminCategory(body.categoryId || current.categoryId, body.category || current.category_name);
+      patch.category_name = selectedCategory.name;
+      patch.category_slug = selectedCategory.slug;
+      patch.categoryId = selectedCategory.id;
+    }
     if (body.instructor !== undefined) { const i = await ensureInstructor(body.instructor, body.instructorRole || "instructor"); patch.instructor_name = i.name; patch.instructor_role = i.role; patch.instructorId = i.id; }
     if (body.level !== undefined) patch.level = levelValue(body.level); if (body.duration_hours !== undefined) patch.duration_hours = Number(body.duration_hours) || 0; if (body.rating !== undefined) patch.average_rating = Number(body.rating) || 0; if (body.price !== undefined) patch.price = Number(body.price) || 0; patch.discount_percent = nextDiscount; patch.discount_start_date = nextStart; patch.discount_end_date = nextEnd;
     if (body.thumbnailData) patch.thumbnail_url = await saveBase64Image(body.thumbnailData, body.thumbnailName, "courses"); else if (body.thumbnail !== undefined) patch.thumbnail_url = body.thumbnail;

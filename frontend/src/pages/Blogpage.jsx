@@ -9,7 +9,7 @@ export default function Blogpage() {
   useEffect(() => { getBlogs().then(setArticles); }, []);
   const categories = ["Semua Berita", ...Array.from(new Set(articles.map((article) => article.category).filter(Boolean)))];
   const filtered = category === "Semua Berita" ? articles : articles.filter((article) => article.category === category);
-  return <main className="min-h-screen bg-[#fffdf4] pt-20 sm:pt-[88px]">
+  return <main className="min-h-screen bg-[#fffdf4] pt-16 sm:pt-[72px]">
     <section className="bg-white border-b border-gray-100"><div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8 sm:py-16">
       <span className="inline-flex rounded-full bg-green-50 px-3 py-1 text-xs font-bold text-green-600">BLOG VIDEO BELAJAR</span>
       <h1 className="mt-4 text-3xl font-bold tracking-tight sm:text-5xl">Berita Pendidikan & Teknologi Terbaru</h1>
