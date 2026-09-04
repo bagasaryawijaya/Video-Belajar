@@ -58,7 +58,9 @@ function handleError(error) {
   if (error.response) {
     const message =
       error.response.data?.message ||
-      `Request gagal (${error.response.status})`;
+      (error.response.status === 405
+        ? "Request gagal (405). API Vercel tidak menerima method POST. Deploy dari root project VideoBelajar agar /api/index.js ikut ter-deploy."
+        : `Request gagal (${error.response.status})`);
 
     throw new Error(message);
   }
