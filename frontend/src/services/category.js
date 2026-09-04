@@ -1,27 +1,12 @@
 import axios from "axios";
 
-/*
-|--------------------------------------------------------------------------
-| API URL
-|--------------------------------------------------------------------------
-|
-| Development:
-| Jika VITE_API_URL diisi, gunakan URL tersebut.
-|
-| Production Vercel:
-| Gunakan /api agar request menuju Serverless Function.
-|
-*/
-
-const API_ROOT = String(
-  import.meta.env.VITE_API_URL || "/api"
-)
+const API_ROOT = String(import.meta.env.VITE_API_URL || "/api")
   .trim()
   .replace(/\/+$/, "")
-  .replace(/\/categories$/, "");
+  .replace(/\/api$/, "") || "";
 
 const api = axios.create({
-  baseURL: `${API_ROOT}/categories`,
+  baseURL: `${API_ROOT}/api/categories`,
   timeout: 15000,
   headers: {
     "Content-Type": "application/json",
@@ -29,101 +14,39 @@ const api = axios.create({
   },
 });
 
-/*
-|--------------------------------------------------------------------------
-| Authorization
-|--------------------------------------------------------------------------
-*/
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("accessToken");
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
 
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("accessToken");
-
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
-
-/*
-|--------------------------------------------------------------------------
-| Error Handler
-|--------------------------------------------------------------------------
-*/
-
-function handleError(error) {
-  if (error.response) {
-    const message =
-      error.response.data?.message ||
-      (error.response.status === 405
-        ? "Request gagal (405). API Vercel tidak menerima method POST. Deploy dari root project VideoBelajar agar /api/index.js ikut ter-deploy."
-        : `Request gagal (${error.response.status})`);
-
-    throw new Error(message);
-  }
-
-  if (error.request) {
-    throw new Error(
-      "Backend tidak dapat dihubungi. Pastikan API Vercel sudah berjalan."
-    );
-  }
-
-  throw error;
+function handleError(error, fallback) {
+  const message = error.response?.data?.message || error.message || fallback;
+  throw new Error(message);
 }
-
-/*
-|--------------------------------------------------------------------------
-| GET Categories
-|--------------------------------------------------------------------------
-*/
 
 export async function getCategories() {
   try {
-    const response = await api.get("/");
-
-    return response.data?.data || [];
+    return (await api.get("/")).data?.data || [];
   } catch (error) {
-    handleError(error);
+    handleError(error, "Gagal mengambil bidang studi.");
   }
 }
-
-/*
-|--------------------------------------------------------------------------
-| CREATE Category
-|--------------------------------------------------------------------------
-*/
 
 export async function addCategory(name) {
   try {
-    const response = await api.post("/", {
-      name: String(name || "").trim(),
-    });
-
+    const response = await api.post("/", { name: String(name || "").trim() });
     return response.data?.data;
   } catch (error) {
-    handleError(error);
+    handleError(error, "Gagal menambahkan bidang studi.");
   }
 }
-
-/*
-|--------------------------------------------------------------------------
-| DELETE Category
-|--------------------------------------------------------------------------
-*/
 
 export async function deleteCategory(id) {
   try {
-    const response = await api.delete(
-      `/${encodeURIComponent(id)}`
-    );
-
-    return response.data;
+    await api.delete(`/${id}`);
+    return true;
   } catch (error) {
-    handleError(error);
+    handleError(error, "Gagal menghapus bidang studi.");
   }
 }
-
-export default api;

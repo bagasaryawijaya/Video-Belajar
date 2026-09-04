@@ -56,7 +56,7 @@ export function CourseProvider({ children }) {
   }, [courses]);
 
   const addCourse = async (course) => {
-    const payload = { ...course, slug: slugify(course.title), rating: Number(course.rating) || 0, reviews: Number(course.reviews) || 0, price: Number(course.price) || 0 };
+    const payload = { ...course, slug: slugify(course.title), rating: Number(course.rating) || 0, reviews: Number(course.reviews) || 0, price: Number(course.price) || 0, id: Date.now() };
     try {
       const newCourse = await addCourseApi(payload);
       dispatch(addCourseToStore(newCourse));

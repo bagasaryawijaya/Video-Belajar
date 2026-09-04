@@ -1,5 +1,5 @@
 // Vercel Serverless Function entry point.
-// Semua endpoint Express backend tersedia melalui /api/*.
+// This file MUST be at the project root: /api/index.js
 import app from "../backend/server.js";
 
 export default app;
