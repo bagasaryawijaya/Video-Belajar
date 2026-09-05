@@ -3,7 +3,6 @@ import { firestore } from "../config/firebase.js";
 
 const courses = () => firestore.collection("courses");
 const lessons = () => firestore.collection("lessons");
-const categories = () => firestore.collection("categories");
 const users = () => firestore.collection("users");
 
 const publicImage = (value) => {
@@ -97,30 +96,19 @@ export const getCourseById = async (req, res, next) => {
   } catch (error) { next(error); }
 };
 
-async function getAdminCategory(categoryId, categoryName = "") {
-  if (!categoryId) throw Object.assign(new Error("categoryId bidang studi wajib diisi dan harus berasal dari Firebase."), { status: 400 });
-  const ref = categories().doc(String(categoryId));
-  const doc = await ref.get();
-  if (!doc.exists) throw Object.assign(new Error("Bidang studi tidak ditemukan di Firebase."), { status: 400 });
-  const data = doc.data() || {};
-  if (categoryName && String(data.name).trim() !== String(categoryName).trim()) {
-    throw Object.assign(new Error("Bidang studi tidak valid."), { status: 400 });
-  }
-  return { id: ref.id, name: String(data.name || "").trim(), slug: String(data.slug || slugify(data.name)) };
-}
-
 export const createCourse = async (req, res, next) => {
   try {
     const { title, description = "", thumbnail, thumbnailData, instructor = "", instructorRole = "instructor", rating = 0, price = 0, category, categoryId, level = "Beginner", duration_hours = 0, discount_percent = 0, discount_start_date = null, discount_end_date = null } = req.body;
     if (!title?.trim()) return res.status(400).json({ success: false, message: "title wajib diisi" });
     if (!thumbnail && !thumbnailData) return res.status(400).json({ success: false, message: "Gambar thumbnail wajib dipilih" });
-    if (!categoryId) return res.status(400).json({ success: false, message: "Pilih bidang studi yang sudah ditambahkan admin." });
-    const selectedCategory = await getAdminCategory(categoryId, category);
+    const categoryName = String(category || "").trim();
+    if (!categoryName) return res.status(400).json({ success: false, message: "Bidang studi wajib diisi" });
+    const categorySlug = slugify(categoryName);
     if (Number(discount_percent) < 0 || Number(discount_percent) > 100) return res.status(400).json({ success: false, message: "discount_percent harus 0-100" });
     if (discount_start_date && discount_end_date && String(discount_start_date) > String(discount_end_date)) return res.status(400).json({ success: false, message: "Tanggal mulai diskon tidak boleh setelah tanggal akhir" });
     const id = crypto.randomUUID(); const slug = await uniqueSlug(title); const inst = await ensureInstructor(instructor, instructorRole);
     const image = thumbnailData || thumbnail || "";
-    const data = { id, course_title: title.trim(), course_slug: slug, thumbnail_url: image, description, category_name: selectedCategory.name, category_slug: selectedCategory.slug, categoryId: selectedCategory.id, instructor_name: inst.name, instructor_role: inst.role, instructorId: inst.id, level: levelValue(level), duration_hours: Number(duration_hours) || 0, total_students: 0, average_rating: Number(rating) || 0, review_count: 0, price: Number(price) || 0, discount_percent: Number(discount_percent) || 0, discount_start_date, discount_end_date, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+    const data = { id, course_title: title.trim(), course_slug: slug, thumbnail_url: image, description, category_name: categoryName, category_slug: categorySlug, categoryId: "", instructor_name: inst.name, instructor_role: inst.role, instructorId: inst.id, level: levelValue(level), duration_hours: Number(duration_hours) || 0, total_students: 0, average_rating: Number(rating) || 0, review_count: 0, price: Number(price) || 0, discount_percent: Number(discount_percent) || 0, discount_start_date, discount_end_date, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
     await courses().doc(id).set(data);
     res.status(201).json({ success: true, data: normalizeCourse(data, id) });
   } catch (error) { next(error); }
@@ -137,11 +125,12 @@ export const updateCourse = async (req, res, next) => {
     const patch = { updatedAt: new Date().toISOString() };
     if (body.title !== undefined) { patch.course_title = body.title; if (body.title !== current.course_title) patch.course_slug = await uniqueSlug(body.title, req.params.id); }
     if (body.description !== undefined) patch.description = body.description;
-    if (body.categoryId !== undefined || body.category !== undefined) {
-      const selectedCategory = await getAdminCategory(body.categoryId || current.categoryId, body.category || current.category_name);
-      patch.category_name = selectedCategory.name;
-      patch.category_slug = selectedCategory.slug;
-      patch.categoryId = selectedCategory.id;
+    if (body.category !== undefined) {
+      const categoryName = String(body.category || "").trim();
+      if (!categoryName) return res.status(400).json({ success: false, message: "Bidang studi wajib diisi" });
+      patch.category_name = categoryName;
+      patch.category_slug = slugify(categoryName);
+      patch.categoryId = "";
     }
     if (body.instructor !== undefined) { const i = await ensureInstructor(body.instructor, body.instructorRole || "instructor"); patch.instructor_name = i.name; patch.instructor_role = i.role; patch.instructorId = i.id; }
     if (body.level !== undefined) patch.level = levelValue(body.level); if (body.duration_hours !== undefined) patch.duration_hours = Number(body.duration_hours) || 0; if (body.rating !== undefined) patch.average_rating = Number(body.rating) || 0; if (body.price !== undefined) patch.price = Number(body.price) || 0; patch.discount_percent = nextDiscount; patch.discount_start_date = nextStart; patch.discount_end_date = nextEnd;

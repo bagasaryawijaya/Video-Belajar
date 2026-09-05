@@ -3,7 +3,6 @@ import { Link, useSearchParams } from "react-router-dom";
 import { FiChevronDown, FiSearch, FiSliders } from "react-icons/fi";
 import { useCourses } from "../context/CourseContext";
 import { courseSlug } from "../utils/slug";
-import { getCategories } from "../services/category";
 
 const durations = ["Kurang dari 4 Jam", "4 – 8 Jam", "Lebih dari 8 Jam"];
 
@@ -61,11 +60,6 @@ export default function Coursepage() {
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("Terbaru");
   const [showAllCategories, setShowAllCategories] = useState(false);
-  const [remoteCategories, setRemoteCategories] = useState([]);
-
-  useEffect(() => {
-    getCategories().then((items) => setRemoteCategories(items.map((item) => item.name).filter(Boolean))).catch(() => {});
-  }, []);
   const [mobileFilter, setMobileFilter] = useState(false);
 
   const filteredCourses = useMemo(() => {
@@ -95,8 +89,8 @@ export default function Coursepage() {
   const toggleDuration = (value) => setDuration((current) => current.includes(value) ? current.filter((item) => item !== value) : [...current, value]);
   const reset = () => { setCategory("Semua Kelas"); setDuration([]); setSearch(""); setSort("Terbaru"); };
 
-  // Filter bidang studi hanya berasal dari koleksi categories Firebase yang dibuat admin.
-  const allCategories = Array.from(new Set(remoteCategories.filter(Boolean)));
+  // Filter bidang studi diambil langsung dari nilai bidang studi pada course.
+  const allCategories = Array.from(new Set(courses.map((course) => String(course.category || "").trim()).filter(Boolean)));
   const visibleCategories = showAllCategories ? allCategories : allCategories.slice(0, 5);
 
   return (
