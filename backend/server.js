@@ -78,8 +78,7 @@ function isAllowedOrigin(origin) {
   return false;
 }
 
-app.use(
-  cors({
+app.use(cors({
     origin(origin, callback) {
       if (isAllowedOrigin(origin)) {
         return callback(null, true);
