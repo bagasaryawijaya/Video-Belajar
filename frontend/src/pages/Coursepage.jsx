@@ -91,7 +91,7 @@ export default function Coursepage() {
 
   // Filter bidang studi diambil langsung dari nilai bidang studi pada course.
   const allCategories = Array.from(new Set(courses.map((course) => String(course.category || "").trim()).filter(Boolean)));
-  const visibleCategories = showAllCategories ? allCategories : allCategories.slice(0, 5);
+  const visibleCategories = showAllCategories ? allCategories : allCategories.slice(0, 6);
 
   return (
     <main className="min-h-screen bg-black pt-24 pb-16 text-gray-900 sm:pt-28">
@@ -126,7 +126,7 @@ export default function Coursepage() {
                     {item}
                   </label>
                 ))}
-                {allCategories.length > 5 && <button onClick={() => setShowAllCategories((v) => !v)} className="text-xs font-medium text-green-600">{showAllCategories ? "Tampilkan lebih sedikit" : "Tampilkan semua"}</button>}
+                {allCategories.length > 6 && <button onClick={() => setShowAllCategories((v) => !v)} className="text-xs font-medium text-green-600">{showAllCategories ? "Tampilkan lebih sedikit" : "Tampilkan semua"}</button>}
               </div>
             </FilterSection>
             <FilterSection title="Durasi">

@@ -1,6 +1,6 @@
 // Vercel Serverless Function entry point.
-// This file intentionally lives at the ROOT /api/index.js so Vercel
-// deploys the Express API when the project is deployed from the root.
+// IMPORTANT: this file stays at the project root in /api/index.js.
+// vercel.json routes every /api/* request here, including POST/PUT/DELETE.
 import app from "../backend/server.js";
 
 export default function handler(req, res) {

@@ -33,6 +33,8 @@ const api = axios.create({
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
+    "Cache-Control": "no-cache",
+    Pragma: "no-cache",
   },
 
   timeout: 15000,
@@ -97,13 +99,31 @@ function handleError(error) {
 
 export async function getCourses() {
   try {
-    const response = await api.get("/");
+    const response = await api.get("/", {
+      params: { _ts: Date.now() },
+      headers: {
+        "Cache-Control": "no-cache",
+        Pragma: "no-cache",
+      },
+    });
 
     const data = unwrap(response);
 
-    return Array.isArray(data)
-      ? data
-      : [];
+    if (Array.isArray(data)) {
+      return data;
+    }
+
+    // Mendukung response API baik dalam bentuk { data: [...] }
+    // maupun array langsung.
+    if (Array.isArray(response.data?.data)) {
+      return response.data.data;
+    }
+
+    if (Array.isArray(response.data)) {
+      return response.data;
+    }
+
+    return [];
   } catch (error) {
     handleError(error);
   }

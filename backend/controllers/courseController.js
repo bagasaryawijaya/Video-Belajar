@@ -60,6 +60,10 @@ async function withLessons(data, id) {
 
 export const getCourses = async (req, res, next) => {
   try {
+    // Daftar course adalah data dinamis. Hindari response lama dari browser/CDN.
+    res.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    res.set("Pragma", "no-cache");
+    res.set("Expires", "0");
     const { q = "", search = "", category, level, minPrice, maxPrice, sortBy = "created_at", order = "desc" } = req.query;
     const keyword = String(q || search || "").trim().toLowerCase();
     const snap = await courses().get();
